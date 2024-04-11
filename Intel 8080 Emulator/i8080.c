@@ -320,25 +320,33 @@ static BYTE rpo(INTEL_8080* i8080) {
 }
 
 static BYTE rst(INTEL_8080* i8080) {
-	return 1;
+	i8080->SP -= 2;
+	i8080->MEM[i8080->SP] = i8080->PC + 1;
+	i8080->PC = opcode(i8080) & 0b00111000;
+	return 0;
 }
 
 static BYTE ei(INTEL_8080* i8080) {
+	i8080->INT = 1;
 	return 1;
 }
 
 static BYTE di(INTEL_8080* i8080) {
+	i8080->INT = 0;
 	return 1;
 }
 
 static BYTE in(INTEL_8080* i8080) {
+	i8080->A = i8080->PORT[byte_arg(i8080)];
 	return 2;
 }
 
 static BYTE out(INTEL_8080* i8080) {
+	i8080->PORT[byte_arg(i8080)] = i8080->A;
 	return 2;
 }
 
 static BYTE hlt(INTEL_8080* i8080) {
+	i8080->HALT = 1;
 	return 1;
 }

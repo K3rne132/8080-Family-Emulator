@@ -4,6 +4,7 @@
 typedef uint8_t  BYTE;
 typedef uint16_t WORD;
 typedef uint8_t  BOOL;
+typedef uint32_t DWORD;
 
 // REGISTER BYTE INSTRUCTIONS
 typedef enum _REG {
@@ -57,6 +58,8 @@ typedef struct _INTEL_8080 {
 		WORD* MEM_W;
 	};
 
+	BYTE* PORT; // 0 - 255 I/O ports
+
 	WORD PC; // Program Counter
 	WORD SP; // Stack Pointer
 
@@ -102,6 +105,14 @@ typedef struct _INTEL_8080 {
 
 		};
 	};
+
+	BOOL HALT; // is CPU halted
+	BOOL INT; // has CPU enabled interrupts
+	BOOL INT_PENDING; // has CPU pending interrupt
+	BYTE INT_VECTOR; // data bus when external device interrupts
+
+	DWORD CYCLES;
+	DWORD INSTRUCTIONS;
 } INTEL_8080;
 
 #pragma pack(pop)
