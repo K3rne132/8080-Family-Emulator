@@ -51,7 +51,12 @@ typedef struct _status {
 
 // Intel 8080 registers set
 typedef struct _INTEL_8080 {
-	BYTE* MEMORY; // pointer to 64k memory
+	// pointer to 64k memory
+	union {
+		BYTE* MEM;
+		WORD* MEM_W;
+	};
+
 	WORD PC; // Program Counter
 	WORD SP; // Stack Pointer
 

@@ -5,7 +5,7 @@
 
 // returns a current opcode at address of program counter
 static inline BYTE opcode(const INTEL_8080* i8080) {
-	return i8080->MEMORY[i8080->PC];
+	return i8080->MEM[i8080->PC];
 }
 
 /*
@@ -25,12 +25,12 @@ static inline BYTE opcode_bits(
 
 // returns a current byte argument at address of program counter + 1
 static inline BYTE byte_arg(const INTEL_8080* i8080) {
-	return i8080->MEMORY[i8080->PC + 1];
+	return i8080->MEM[i8080->PC + 1];
 }
 
 // returns a current word argument at address of program counter + 1
 static inline WORD word_arg(const INTEL_8080* i8080) {
-	return MAKEWORD(i8080->MEMORY[i8080->PC + 1], i8080->MEMORY[i8080->PC + 2]);
+	return i8080->MEM_W[i8080->PC + 1];
 }
 
 
@@ -154,7 +154,7 @@ static BYTE sphl(INTEL_8080* i8080) {
 static BYTE mvi(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	(reg != REG_M) ? (i8080->reg_b[reg] = byte_arg(i8080)) :
-		(i8080->MEMORY[i8080->HL] = byte_arg(i8080));
+		(i8080->MEM[i8080->HL] = byte_arg(i8080));
 	return 2;
 }
 
@@ -245,7 +245,7 @@ static BYTE jpo(INTEL_8080* i8080) {
 
 static BYTE call(INTEL_8080* i8080) {
 	i8080->SP -= 2;
-	i8080->MEMORY[i8080->SP] = i8080->PC + 3;
+	i8080->MEM[i8080->SP] = i8080->PC + 3;
 	return jmp(i8080);
 }
 
@@ -282,7 +282,7 @@ static BYTE cpo(INTEL_8080* i8080) {
 }
 
 static BYTE ret(INTEL_8080* i8080) {
-	i8080->PC = i8080->MEMORY[i8080->SP];
+	i8080->PC = i8080->MEM[i8080->SP];
 	i8080->SP += 2;
 	return 0;
 }

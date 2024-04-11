@@ -46,15 +46,15 @@ static inline int initialize(
 	i8080->F = 0b00000010;
 	i8080->PC = origin_pc;
 	i8080->SP = origin_sp;
-	i8080->MEMORY = (BYTE*)calloc(0x10000, sizeof(BYTE));
-	if (i8080->MEMORY == NULL)
+	i8080->MEM = (BYTE*)calloc(0x10000, sizeof(BYTE));
+	if (i8080->MEM == NULL)
 		return 1;
 	return 0;
 }
 
 static inline int destroy(INTEL_8080* i8080) {
-	if (i8080->MEMORY) {
-		free(i8080->MEMORY);
+	if (i8080->MEM) {
+		free(i8080->MEM);
 		return 0;
 	}
 	return 1;
@@ -62,7 +62,7 @@ static inline int destroy(INTEL_8080* i8080) {
 
 static inline int emulate(INTEL_8080* i8080) {
 	while (1) {
-		i8080->PC += OPCODE_TABLE[i8080->MEMORY[i8080->PC]](i8080);
+		i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
 	}
 	return 0;
 }
