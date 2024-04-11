@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34622.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Intel 8080 Emulator", "Intel 8080 Emulator\Intel 8080 Emulator.vcxproj", "{9DF4B694-758C-4BD7-A7A3-870A1E85154D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "8080 Family Tests", "8080 Family Tests\8080 Family Tests.vcxproj", "{4CC7B002-1E59-4597-937E-20687B148F9B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D} = {9DF4B694-758C-4BD7-A7A3-870A1E85154D}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Debug|x64.ActiveCfg = Debug|x64
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Debug|x64.Build.0 = Debug|x64
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Debug|x86.ActiveCfg = Debug|Win32
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Debug|x86.Build.0 = Debug|Win32
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Release|x64.ActiveCfg = Release|x64
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Release|x64.Build.0 = Release|x64
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Release|x86.ActiveCfg = Release|Win32
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D}.Release|x86.Build.0 = Release|Win32
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Debug|x64.ActiveCfg = Debug|x64
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Debug|x64.Build.0 = Debug|x64
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Debug|x86.ActiveCfg = Debug|Win32
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Debug|x86.Build.0 = Debug|Win32
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Release|x64.ActiveCfg = Release|x64
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Release|x64.Build.0 = Release|x64
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Release|x86.ActiveCfg = Release|Win32
+		{4CC7B002-1E59-4597-937E-20687B148F9B}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {70CC3529-B279-43C4-AF91-1C18A06B4000}
+	EndGlobalSection
+EndGlobal
