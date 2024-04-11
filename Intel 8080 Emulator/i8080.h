@@ -3,9 +3,7 @@
 
 typedef uint8_t  BYTE;
 typedef uint16_t WORD;
-typedef BYTE(*INSTRUCTION)(BYTE* code);
-
-const static INSTRUCTION OPCODE_TABLE[256];
+typedef uint8_t  BOOL;
 
 // REGISTER BYTE INSTRUCTIONS
 typedef enum _REG {
@@ -32,12 +30,12 @@ typedef enum _REG_PAIR {
 #pragma pack(push, 1) // pad to 1 byte
 
 /* Flags (Status) Register
----------------------------------
+|-------------------------------|
 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
----------------------------------
+|-------------------------------|
 |   |   |   | A |   |   |   |   |
 | S | Z | 0 | C | 0 | P | 1 | C |
----------------------------------
+|-------------------------------|
 */
 
 typedef struct _status {
@@ -53,6 +51,7 @@ typedef struct _status {
 
 // Intel 8080 registers set
 typedef struct _INTEL_8080 {
+	BYTE* MEMORY; // pointer to 64k memory
 	WORD PC; // Program Counter
 	WORD SP; // Stack Pointer
 
@@ -101,3 +100,82 @@ typedef struct _INTEL_8080 {
 } INTEL_8080;
 
 #pragma pack(pop)
+
+typedef BYTE(*INSTRUCTION)(INTEL_8080* i8080);
+const static INSTRUCTION OPCODE_TABLE[256];
+
+BYTE cmc(INTEL_8080* i8080);
+BYTE stc(INTEL_8080* i8080);
+BYTE inr(INTEL_8080* i8080);
+BYTE dcr(INTEL_8080* i8080);
+BYTE cma(INTEL_8080* i8080);
+BYTE daa(INTEL_8080* i8080);
+BYTE stax(INTEL_8080* i8080);
+BYTE ldax(INTEL_8080* i8080);
+BYTE mov(INTEL_8080* i8080);
+BYTE add(INTEL_8080* i8080);
+BYTE adc(INTEL_8080* i8080);
+BYTE sub(INTEL_8080* i8080);
+BYTE sbb(INTEL_8080* i8080);
+BYTE ana(INTEL_8080* i8080);
+BYTE xra(INTEL_8080* i8080);
+BYTE ora(INTEL_8080* i8080);
+BYTE cmp(INTEL_8080* i8080);
+BYTE rlc(INTEL_8080* i8080);
+BYTE rrc(INTEL_8080* i8080);
+BYTE ral(INTEL_8080* i8080);
+BYTE rar(INTEL_8080* i8080);
+BYTE push(INTEL_8080* i8080);
+BYTE pop(INTEL_8080* i8080);
+BYTE dad(INTEL_8080* i8080);
+BYTE inx(INTEL_8080* i8080);
+BYTE dcx(INTEL_8080* i8080);
+BYTE xchg(INTEL_8080* i8080);
+BYTE xthl(INTEL_8080* i8080);
+BYTE sphl(INTEL_8080* i8080);
+BYTE mvi(INTEL_8080* i8080);
+BYTE adi(INTEL_8080* i8080);
+BYTE aci(INTEL_8080* i8080);
+BYTE sui(INTEL_8080* i8080);
+BYTE sbi(INTEL_8080* i8080);
+BYTE ani(INTEL_8080* i8080);
+BYTE xri(INTEL_8080* i8080);
+BYTE ori(INTEL_8080* i8080);
+BYTE cpi(INTEL_8080* i8080);
+BYTE sta(INTEL_8080* i8080);
+BYTE lda(INTEL_8080* i8080);
+BYTE shld(INTEL_8080* i8080);
+BYTE lhld(INTEL_8080* i8080);
+BYTE jmp(INTEL_8080* i8080);
+BYTE jc(INTEL_8080* i8080);
+BYTE jnc(INTEL_8080* i8080);
+BYTE jz(INTEL_8080* i8080);
+BYTE jnz(INTEL_8080* i8080);
+BYTE jm(INTEL_8080* i8080);
+BYTE jp(INTEL_8080* i8080);
+BYTE jpe(INTEL_8080* i8080);
+BYTE jpo(INTEL_8080* i8080);
+BYTE call(INTEL_8080* i8080);
+BYTE cc(INTEL_8080* i8080);
+BYTE cnc(INTEL_8080* i8080);
+BYTE cz(INTEL_8080* i8080);
+BYTE cnz(INTEL_8080* i8080);
+BYTE cm(INTEL_8080* i8080);
+BYTE cp(INTEL_8080* i8080);
+BYTE cpe(INTEL_8080* i8080);
+BYTE cpo(INTEL_8080* i8080);
+BYTE ret(INTEL_8080* i8080);
+BYTE rc(INTEL_8080* i8080);
+BYTE rnc(INTEL_8080* i8080);
+BYTE rz(INTEL_8080* i8080);
+BYTE rnz(INTEL_8080* i8080);
+BYTE rm(INTEL_8080* i8080);
+BYTE rp(INTEL_8080* i8080);
+BYTE rpe(INTEL_8080* i8080);
+BYTE rpo(INTEL_8080* i8080);
+BYTE rst(INTEL_8080* i8080);
+BYTE ei(INTEL_8080* i8080);
+BYTE di(INTEL_8080* i8080);
+BYTE in(INTEL_8080* i8080);
+BYTE out(INTEL_8080* i8080);
+BYTE hlt(INTEL_8080* i8080);
