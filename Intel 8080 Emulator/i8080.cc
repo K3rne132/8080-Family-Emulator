@@ -4,7 +4,7 @@
 #define MAKEWORD(low,high) ((WORD)((BYTE)low))|(((WORD)((BYTE)high))<<8)
 
 // returns a current opcode at address of program counter
-static inline BYTE opcode(const INTEL_8080* i8080) {
+static BYTE opcode(const INTEL_8080* i8080) {
 	return i8080->MEM[i8080->PC];
 }
 
@@ -12,8 +12,8 @@ static inline BYTE opcode(const INTEL_8080* i8080) {
 returns a bits from an opcode
 example: l = 5, r = 3 will results in [543] bits
 l and r cannot be greater than 7 and r < l
-*/ 
-static inline BYTE opcode_bits(
+*/
+static BYTE opcode_bits(
 	const INTEL_8080* i8080,
 	const BYTE l, // the most significant bit
 	const BYTE r  // the least significant bit
@@ -28,7 +28,7 @@ returns a bits from an accumulator
 example: l = 5, r = 3 will results in [543] bits
 l and r cannot be greater than 7 and r < l
 */
-static inline BYTE accumulator_bits(
+static BYTE acumulator_bits(
 	const INTEL_8080* i8080,
 	const BYTE l, // the most significant bit
 	const BYTE r  // the least significant bit
@@ -39,17 +39,17 @@ static inline BYTE accumulator_bits(
 }
 
 // returns a current byte argument at address of program counter + 1
-static inline BYTE byte_arg(const INTEL_8080* i8080) {
+static BYTE byte_arg(const INTEL_8080* i8080) {
 	return i8080->MEM[i8080->PC + 1];
 }
 
 // returns a current word argument at address of program counter + 1
-static inline WORD word_arg(const INTEL_8080* i8080) {
+static WORD word_arg(const INTEL_8080* i8080) {
 	return i8080->MEM_W[i8080->PC + 1];
 }
 
 // returns parity flag for given value
-static inline BOOL parity_check(const BYTE val) {
+static BOOL parity_check(const BYTE val) {
 	// Source: https://stackoverflow.com/a/48041356
 	BYTE x = val;
 	x ^= x >> 4;
@@ -58,26 +58,26 @@ static inline BOOL parity_check(const BYTE val) {
 	return (~x) & 1;
 }
 // returns carry flag for a + b = c
-static inline BOOL pimpek_carry_check(const BYTE a, const BYTE b, const BYTE c) {
+static BOOL pimpek_carry_check(const BYTE a, const BYTE b, const BYTE c) {
 	return ((a & 0x80) || (b & 0x80)) && !(c & 0x80) || ((a & 0x80) && (b & 0x80));
 }
 
 // returns auxiliary_carry flag for a + b = c
-static inline BOOL auxiliary_pimpek_carry_check(const BYTE a, const BYTE b, const BYTE c) {
+static BOOL auxiliary_pimpek_carry_check(const BYTE a, const BYTE b, const BYTE c) {
 	return ((a & 0x8) || (b & 0x8)) && !(c & 0x8) || ((a & 0x8) && (b & 0x8));
 }
 
-static BYTE cmc(INTEL_8080* i8080) {
+BYTE cmc(INTEL_8080* i8080) {
 	i8080->status.C ^= 1;
 	return 1;
 }
 
-static BYTE stc(INTEL_8080* i8080) {
+BYTE stc(INTEL_8080* i8080) {
 	i8080->status.C = 1;
 	return 1;
 }
 
-static BYTE inr(INTEL_8080* i8080) {
+BYTE inr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	BYTE value;
 	if (reg != REG_M) {
@@ -95,7 +95,7 @@ static BYTE inr(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE dcr(INTEL_8080* i8080) {
+BYTE dcr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	BYTE value;
 	if (reg != REG_M) {
@@ -113,12 +113,12 @@ static BYTE dcr(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE cma(INTEL_8080* i8080) {
+BYTE cma(INTEL_8080* i8080) {
 	i8080->A = ~(i8080->A);
 	return 1;
 }
 
-static BYTE daa(INTEL_8080* i8080) {
+BYTE daa(INTEL_8080* i8080) {
 	BYTE lacu = acumulator_bits(i8080, 3, 0);
 	BYTE aprev = i8080->A & 0xf;
 	BYTE addend = (6 * (lacu > 9 || i8080->status.AC));
@@ -132,21 +132,21 @@ static BYTE daa(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE stax(INTEL_8080* i8080) {
+BYTE stax(INTEL_8080* i8080) {
 	BYTE rp = acumulator_bits(i8080, 4, 4);
 	(rp) ? (i8080->MEM[REG_PAIR_BC] = i8080->A) : 
 		(i8080->MEM[REG_PAIR_DE] = i8080->A);
 	return 1;
 }
 
-static BYTE ldax(INTEL_8080* i8080) {
+BYTE ldax(INTEL_8080* i8080) {
 	BYTE rp = acumulator_bits(i8080, 4, 4);
 	(rp) ? (i8080->A = i8080->MEM[REG_PAIR_BC]) :
 		(i8080->A = i8080->MEM[REG_PAIR_DE]);
 	return 1;
 }
 
-static BYTE mov(INTEL_8080* i8080) {
+BYTE mov(INTEL_8080* i8080) {
 	BYTE src = acumulator_bits(i8080, 2, 0);
 	BYTE dst = acumulator_bits(i8080, 5, 3);
 	if (src == REG_M && dst == REG_M) {
@@ -165,7 +165,7 @@ static BYTE mov(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE add(INTEL_8080* i8080) {
+BYTE add(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE addend;
@@ -181,7 +181,7 @@ static BYTE add(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE adc(INTEL_8080* i8080) {
+BYTE adc(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE addend;
@@ -197,7 +197,7 @@ static BYTE adc(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE sub(INTEL_8080* i8080) {
+BYTE sub(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE substrahend;
@@ -213,7 +213,7 @@ static BYTE sub(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE sbb(INTEL_8080* i8080) {
+BYTE sbb(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE substrahend;
@@ -230,7 +230,7 @@ static BYTE sbb(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE ana(INTEL_8080* i8080) {
+BYTE ana(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	(reg != REG_M) ? (i8080->A &= i8080->reg_b[reg]) :
 		(i8080->A &= i8080->MEM[i8080->HL]);
@@ -243,7 +243,7 @@ static BYTE ana(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE xra(INTEL_8080* i8080) {
+BYTE xra(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	(reg != REG_M) ? (i8080->A ^= i8080->reg_b[reg]) :
 		(i8080->A ^= i8080->MEM[i8080->HL]);
@@ -257,7 +257,7 @@ static BYTE xra(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE ora(INTEL_8080* i8080) {
+BYTE ora(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	(reg != REG_M) ? (i8080->A |= i8080->reg_b[reg]) :
 		(i8080->A |= i8080->MEM[i8080->HL]);
@@ -270,254 +270,254 @@ static BYTE ora(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE cmp(INTEL_8080* i8080) {
+BYTE cmp(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rlc(INTEL_8080* i8080) {
+BYTE rlc(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rrc(INTEL_8080* i8080) {
+BYTE rrc(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE ral(INTEL_8080* i8080) {
+BYTE ral(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rar(INTEL_8080* i8080) {
+BYTE rar(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE push(INTEL_8080* i8080) {
+BYTE push(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE pop(INTEL_8080* i8080) {
+BYTE pop(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE dad(INTEL_8080* i8080) {
+BYTE dad(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE inx(INTEL_8080* i8080) {
+BYTE inx(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE dcx(INTEL_8080* i8080) {
+BYTE dcx(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE xchg(INTEL_8080* i8080) {
+BYTE xchg(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE xthl(INTEL_8080* i8080) {
+BYTE xthl(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE sphl(INTEL_8080* i8080) {
+BYTE sphl(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE mvi(INTEL_8080* i8080) {
+BYTE mvi(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	(reg != REG_M) ? (i8080->reg_b[reg] = byte_arg(i8080)) :
 		(i8080->MEM[i8080->HL] = byte_arg(i8080));
 	return 2;
 }
 
-static BYTE adi(INTEL_8080* i8080) {
+BYTE adi(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE aci(INTEL_8080* i8080) {
+BYTE aci(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE sui(INTEL_8080* i8080) {
+BYTE sui(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE sbi(INTEL_8080* i8080) {
+BYTE sbi(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE ani(INTEL_8080* i8080) {
+BYTE ani(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE xri(INTEL_8080* i8080) {
+BYTE xri(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE ori(INTEL_8080* i8080) {
+BYTE ori(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE cpi(INTEL_8080* i8080) {
+BYTE cpi(INTEL_8080* i8080) {
 	return 2;
 }
 
-static BYTE sta(INTEL_8080* i8080) {
+BYTE sta(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE lda(INTEL_8080* i8080) {
+BYTE lda(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE shld(INTEL_8080* i8080) {
+BYTE shld(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE lhld(INTEL_8080* i8080) {
+BYTE lhld(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jmp(INTEL_8080* i8080) {
+BYTE jmp(INTEL_8080* i8080) {
 	i8080->PC = word_arg(i8080);
 	return 0;
 }
 
-static BYTE jc(INTEL_8080* i8080) {
+BYTE jc(INTEL_8080* i8080) {
 	return i8080->status.C ? jmp(i8080) : 3;
 }
 
-static BYTE jnc(INTEL_8080* i8080) {
+BYTE jnc(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jz(INTEL_8080* i8080) {
+BYTE jz(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jnz(INTEL_8080* i8080) {
+BYTE jnz(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jm(INTEL_8080* i8080) {
+BYTE jm(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jp(INTEL_8080* i8080) {
+BYTE jp(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jpe(INTEL_8080* i8080) {
+BYTE jpe(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE jpo(INTEL_8080* i8080) {
+BYTE jpo(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE call(INTEL_8080* i8080) {
+BYTE call(INTEL_8080* i8080) {
 	i8080->SP -= 2;
 	i8080->MEM[i8080->SP] = i8080->PC + 3;
 	return jmp(i8080);
 }
 
-static BYTE cc(INTEL_8080* i8080) {
+BYTE cc(INTEL_8080* i8080) {
 	return i8080->status.C ? call(i8080) : 3;
 }
 
-static BYTE cnc(INTEL_8080* i8080) {
+BYTE cnc(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cz(INTEL_8080* i8080) {
+BYTE cz(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cnz(INTEL_8080* i8080) {
+BYTE cnz(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cm(INTEL_8080* i8080) {
+BYTE cm(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cp(INTEL_8080* i8080) {
+BYTE cp(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cpe(INTEL_8080* i8080) {
+BYTE cpe(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE cpo(INTEL_8080* i8080) {
+BYTE cpo(INTEL_8080* i8080) {
 	return 3;
 }
 
-static BYTE ret(INTEL_8080* i8080) {
+BYTE ret(INTEL_8080* i8080) {
 	i8080->PC = i8080->MEM[i8080->SP];
 	i8080->SP += 2;
 	return 0;
 }
 
-static BYTE rc(INTEL_8080* i8080) {
+BYTE rc(INTEL_8080* i8080) {
 	return i8080->status.C ? ret(i8080) : 1;
 }
 
-static BYTE rnc(INTEL_8080* i8080) {
+BYTE rnc(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rz(INTEL_8080* i8080) {
+BYTE rz(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rnz(INTEL_8080* i8080) {
+BYTE rnz(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rm(INTEL_8080* i8080) {
+BYTE rm(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rp(INTEL_8080* i8080) {
+BYTE rp(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rpe(INTEL_8080* i8080) {
+BYTE rpe(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rpo(INTEL_8080* i8080) {
+BYTE rpo(INTEL_8080* i8080) {
 	return 1;
 }
 
-static BYTE rst(INTEL_8080* i8080) {
+BYTE rst(INTEL_8080* i8080) {
 	i8080->SP -= 2;
 	i8080->MEM[i8080->SP] = i8080->PC + 1;
 	i8080->PC = opcode(i8080) & 0b00111000;
 	return 0;
 }
 
-static BYTE ei(INTEL_8080* i8080) {
+BYTE ei(INTEL_8080* i8080) {
 	i8080->INT = 1;
 	return 1;
 }
 
-static BYTE di(INTEL_8080* i8080) {
+BYTE di(INTEL_8080* i8080) {
 	i8080->INT = 0;
 	return 1;
 }
 
-static BYTE in(INTEL_8080* i8080) {
+BYTE in(INTEL_8080* i8080) {
 	i8080->A = i8080->PORT[byte_arg(i8080)];
 	return 2;
 }
 
-static BYTE out(INTEL_8080* i8080) {
+BYTE out(INTEL_8080* i8080) {
 	i8080->PORT[byte_arg(i8080)] = i8080->A;
 	return 2;
 }
 
-static BYTE hlt(INTEL_8080* i8080) {
+BYTE hlt(INTEL_8080* i8080) {
 	i8080->HALT = 1;
 	return 1;
 }

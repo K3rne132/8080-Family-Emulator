@@ -23,7 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{9df4b694-758c-4bd7-a7a3-870a1e85154d}</ProjectGuid>
     <RootNamespace>Intel8080Emulator</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -130,8 +130,8 @@
     <ClInclude Include="i8080.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="i8080.c" />
-    <ClCompile Include="i8080emulator.c" />
+    <ClCompile Include="i8080.cc" />
+    <ClCompile Include="i8080emulator.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

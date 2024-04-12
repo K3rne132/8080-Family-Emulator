@@ -20,10 +20,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="i8080.c">
+    <ClCompile Include="i8080.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="i8080emulator.c">
+    <ClCompile Include="i8080emulator.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>

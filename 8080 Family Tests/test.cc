@@ -68,7 +68,7 @@ TEST_F(Intel8080FixtureTests, StatusFlagTest) {
 }
 
 TEST_F(Intel8080FixtureTests, CarryBitInstructionsTest) {
-	
+
 }
 
 TEST_F(Intel8080FixtureTests, SingleRegisterInstructionsTest) {

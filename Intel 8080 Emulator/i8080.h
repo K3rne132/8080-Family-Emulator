@@ -118,7 +118,6 @@ typedef struct _INTEL_8080 {
 #pragma pack(pop)
 
 typedef BYTE(*INSTRUCTION)(INTEL_8080* i8080);
-const static INSTRUCTION OPCODE_TABLE[256];
 
 BYTE cmc(INTEL_8080* i8080);
 BYTE stc(INTEL_8080* i8080);
