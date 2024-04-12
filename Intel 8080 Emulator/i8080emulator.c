@@ -3,14 +3,14 @@
 #include "i8080.h"
 
 const static INSTRUCTION OPCODE_TABLE[256] = {
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x00 - 0x07
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x08 - 0x0F
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x10 - 0x17
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x18 - 0x1F
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x20 - 0x27
+	NULL, NULL, stax, NULL, inr, dcr, mvi, NULL, // 0x00 - 0x07
+	NULL, NULL, ldax, NULL, inr, dcr, mvi, NULL, // 0x08 - 0x0F
+	NULL, NULL, stax, NULL, inr, dcr, mvi, NULL, // 0x10 - 0x17
+	NULL, NULL, ldax, NULL, inr, dcr, mvi, NULL, // 0x18 - 0x1F
+	NULL, NULL, NULL, NULL, inr, dcr, mvi, daa, // 0x20 - 0x27
 	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x28 - 0x2F
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x30 - 0x37
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x38 - 0x3F
+	NULL, NULL, NULL, NULL, inr, dcr, mvi, stc, // 0x30 - 0x37
+	NULL, NULL, NULL, NULL, inr, dcr, mvi, cmc, // 0x38 - 0x3F
 	mov, mov, mov, mov, mov, mov, mov, mov, // 0x40 - 0x47
 	mov, mov, mov, mov, mov, mov, mov, mov, // 0x48 - 0x4F
 	mov, mov, mov, mov, mov, mov, mov, mov, // 0x50 - 0x57
