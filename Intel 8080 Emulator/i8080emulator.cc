@@ -2,39 +2,74 @@
 #include <string.h>
 #include "i8080.h"
 
-const static INSTRUCTION OPCODE_TABLE[256] = {
-	NULL, NULL, stax, NULL, inr, dcr, mvi, NULL, // 0x00 - 0x07
-	NULL, NULL, ldax, NULL, inr, dcr, mvi, NULL, // 0x08 - 0x0F
-	NULL, NULL, stax, NULL, inr, dcr, mvi, NULL, // 0x10 - 0x17
-	NULL, NULL, ldax, NULL, inr, dcr, mvi, NULL, // 0x18 - 0x1F
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, daa, // 0x20 - 0x27
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, NULL, // 0x28 - 0x2F
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, stc, // 0x30 - 0x37
-	NULL, NULL, NULL, NULL, inr, dcr, mvi, cmc, // 0x38 - 0x3F
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x40 - 0x47
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x48 - 0x4F
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x50 - 0x57
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x58 - 0x5F
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x60 - 0x67
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x68 - 0x6F
-	mov, mov, mov, mov, mov, mov, hlt, mov, // 0x70 - 0x77
-	mov, mov, mov, mov, mov, mov, mov, mov, // 0x78 - 0x7F
-	add, add, add, add, add, add, add, add, // 0x80 - 0x87
-	adc, adc, adc, adc, adc, adc, adc, adc, // 0x88 - 0x8F
-	sub, sub, sub, sub, sub, sub, sub, sub, // 0x90 - 0x97
-	sbb, sbb, sbb, sbb, sbb, sbb, sbb, sbb, // 0x98 - 0x9F
-	ana, ana, ana, ana, ana, ana, ana, ana, // 0xA0 - 0xA7
-	xra, xra, xra, xra, xra, xra, xra, xra, // 0xA8 - 0xAF
-	ora, ora, ora, ora, ora, ora, ora, ora, // 0xB0 - 0xB7
-	cmp, cmp, cmp, cmp, cmp, cmp, cmp, cmp, // 0xB8 - 0xBF
-	rnz, NULL, jnz, NULL, cnz, NULL, NULL, rst, // 0xC0 - 0xC7
-	rz, ret, jz, NULL, cz, call, NULL, rst, // 0xC8 - 0xCF
-	rnc, NULL, jnc, out, cnc, NULL, NULL, rst, // 0xD0 - 0xD7
-	rc, NULL, jc, in, cc, NULL, NULL, rst, // 0xD8 - 0xDF
-	rpo, NULL, jpo, NULL, cpo, NULL, NULL, rst, // 0xE0 - 0xE7
-	rpe, NULL, jpe, NULL, cpe, NULL, NULL, rst, // 0xE8 - 0xEF
-	rp, NULL, jp, di, cp, NULL, NULL, rst, // 0xF0 - 0xF7
-	rm, NULL, jm, ei, cm, NULL, NULL, rst  // 0xF8 - 0xFF
+static const INSTRUCTION OPCODE_TABLE[256] = {
+	nop, lxi,  stax, inx,  inr, dcr,  mvi, rlc, // 0x00 - 0x07
+	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
+	nop, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
+	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rar, // 0x18 - 0x1F
+	nop, lxi,  shld, inx,  inr, dcr,  mvi, daa, // 0x20 - 0x27
+	nop, dad,  lhld, dcx,  inr, dcr,  mvi, stc, // 0x28 - 0x2F
+	nop, lxi,  sta,  inx,  inr, dcr,  mvi, stc, // 0x30 - 0x37
+	nop, dad,  lda,  dcx,  inr, dcr,  mvi, cmc, // 0x38 - 0x3F
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x40 - 0x47
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x48 - 0x4F
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x50 - 0x57
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x58 - 0x5F
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x60 - 0x67
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x68 - 0x6F
+	mov, mov,  mov,  mov,  mov, mov,  hlt, mov, // 0x70 - 0x77
+	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x78 - 0x7F
+	add, add,  add,  add,  add, add,  add, add, // 0x80 - 0x87
+	adc, adc,  adc,  adc,  adc, adc,  adc, adc, // 0x88 - 0x8F
+	sub, sub,  sub,  sub,  sub, sub,  sub, sub, // 0x90 - 0x97
+	sbb, sbb,  sbb,  sbb,  sbb, sbb,  sbb, sbb, // 0x98 - 0x9F
+	ana, ana,  ana,  ana,  ana, ana,  ana, ana, // 0xA0 - 0xA7
+	xra, xra,  xra,  xra,  xra, xra,  xra, xra, // 0xA8 - 0xAF
+	ora, ora,  ora,  ora,  ora, ora,  ora, ora, // 0xB0 - 0xB7
+	cmp, cmp,  cmp,  cmp,  cmp, cmp,  cmp, cmp, // 0xB8 - 0xBF
+	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
+	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
+	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
+	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
+	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
+	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
+	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
+	rm,  sphl, jm,   ei,   cm,  nop,  cpi, rst  // 0xF8 - 0xFF
+};
+
+static const char* OPCODE_NAME[256] = {
+	"", "", "", "", "", "", "", "", // 0x00 - 0x07
+	"", "", "", "", "", "", "", "", // 0x08 - 0x0F
+	"", "", "", "", "", "", "", "", // 0x10 - 0x17
+	"", "", "", "", "", "", "", "", // 0x18 - 0x1F
+	"", "", "", "", "", "", "", "", // 0x20 - 0x27
+	"", "", "", "", "", "", "", "", // 0x28 - 0x2F
+	"", "", "", "", "", "", "", "", // 0x30 - 0x37
+	"", "", "", "", "", "", "", "", // 0x38 - 0x3F
+	"", "", "", "", "", "", "", "", // 0x40 - 0x47
+	"", "", "", "", "", "", "", "", // 0x48 - 0x4F
+	"", "", "", "", "", "", "", "", // 0x50 - 0x57
+	"", "", "", "", "", "", "", "", // 0x58 - 0x5F
+	"", "", "", "", "", "", "", "", // 0x60 - 0x67
+	"", "", "", "", "", "", "", "", // 0x68 - 0x6F
+	"", "", "", "", "", "", "", "", // 0x70 - 0x77
+	"", "", "", "", "", "", "", "", // 0x78 - 0x7F
+	"", "", "", "", "", "", "", "", // 0x80 - 0x87
+	"", "", "", "", "", "", "", "", // 0x88 - 0x8F
+	"", "", "", "", "", "", "", "", // 0x90 - 0x97
+	"", "", "", "", "", "", "", "", // 0x98 - 0x9F
+	"", "", "", "", "", "", "", "", // 0xA0 - 0xA7
+	"", "", "", "", "", "", "", "", // 0xA8 - 0xAF
+	"", "", "", "", "", "", "", "", // 0xB0 - 0xB7
+	"", "", "", "", "", "", "", "", // 0xB8 - 0xBF
+	"", "", "", "", "", "", "", "", // 0xC0 - 0xC7
+	"", "", "", "", "", "", "", "", // 0xC8 - 0xCF
+	"", "", "", "", "", "", "", "", // 0xD0 - 0xD7
+	"", "", "", "", "", "", "", "", // 0xD8 - 0xDF
+	"", "", "", "", "", "", "", "", // 0xE0 - 0xE7
+	"", "", "", "", "", "", "", "", // 0xE8 - 0xEF
+	"", "", "", "", "", "", "", "", // 0xF0 - 0xF7
+	"", "", "", "", "", "", "", ""  // 0xF8 - 0xFF
 };
 
 static inline int initialize(
