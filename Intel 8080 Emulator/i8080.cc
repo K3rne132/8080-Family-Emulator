@@ -69,6 +69,34 @@ static BOOL auxiliary_pimpek_carry_check(const BYTE a, const BYTE b, const BYTE 
 	return ((a & 0x8) || (b & 0x8)) && !(c & 0x8) || ((a & 0x8) && (b & 0x8));
 }
 
+// returns flag register based on extended arithmetic/logical operation result
+static void set_flags(
+	INTEL_8080* i8080,
+	const DWORD result_with_carry,
+	const BOOL c, // carry affected
+	const BOOL z, // zero affected
+	const BOOL s, // sign affected
+	const BOOL p, // parity affected
+	const BOOL ac // auxiliary carry affected
+) {
+	c  ? i8080->status.C = result_with_carry >> 8 : 0;
+	z  ? i8080->status.Z = ((result_with_carry & 0xFF) == 0) : 0;
+	s  ? i8080->status.S = ((result_with_carry & 0xFF) >= 0x80) : 0;
+	p  ? i8080->status.P = parity_check(result_with_carry & 0xFF) : 0;
+	ac ? i8080->status.AC = result_with_carry >> 4 : 0;
+}
+
+static void write_word_on_stack(INTEL_8080* i8080, WORD word) {
+	i8080->MEM[i8080->SP] = word >> 8;
+	i8080->MEM[i8080->SP + 1] = (BYTE)word;
+}
+
+static WORD read_word_from_stack(INTEL_8080* i8080) {
+	WORD result = i8080->MEM[i8080->SP + 1] << 8;
+	result |= i8080->MEM[i8080->SP];
+	return result;
+}
+
 BYTE cmc(INTEL_8080* i8080) {
 	i8080->status.C ^= 1;
 	return 1;
@@ -83,7 +111,7 @@ BYTE inr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	BYTE value;
 	if (reg != REG_M) {
-		value = i8080->reg_b[reg]++;
+		value = i8080->REG[reg]++;
 	}
 	else {
 		value = i8080->MEM[i8080->HL]++;
@@ -101,7 +129,7 @@ BYTE dcr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	BYTE value;
 	if (reg != REG_M) {
-		value = i8080->reg_b[reg]--;
+		value = i8080->REG[reg]--;
 	}
 	else {
 		value = i8080->MEM[i8080->HL]--;
@@ -155,13 +183,13 @@ BYTE mov(INTEL_8080* i8080) {
 		// Illegal operation
 	}
 	else if (src != REG_M && dst != REG_M) {
-		i8080->reg_b[dst] = i8080->reg_b[src];
+		i8080->REG[dst] = i8080->REG[src];
 	}
 	else if (src == REG_M) {
-		i8080->reg_b[dst] = i8080->MEM[i8080->HL];
+		i8080->REG[dst] = i8080->MEM[i8080->HL];
 	}
 	else if (dst == REG_M) {
-		i8080->MEM[i8080->HL] = i8080->reg_b[src];
+		i8080->MEM[i8080->HL] = i8080->REG[src];
 	}
 
 	return 1;
@@ -171,7 +199,7 @@ BYTE add(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE addend;
-	(reg != REG_M) ? (addend = i8080->reg_b[reg]) :
+	(reg != REG_M) ? (addend = i8080->REG[reg]) :
 		(addend = i8080->MEM[i8080->HL]);
 	i8080->A += addend;
 
@@ -187,7 +215,7 @@ BYTE adc(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE addend;
-	(reg != REG_M) ? (addend = i8080->reg_b[reg] + i8080->status.C) :
+	(reg != REG_M) ? (addend = i8080->REG[reg] + i8080->status.C) :
 		(addend = i8080->MEM[i8080->HL] + i8080->status.C);
 	i8080->A += addend;
 
@@ -203,7 +231,7 @@ BYTE sub(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE substrahend;
-	(reg != REG_M) ? (substrahend = i8080->reg_b[reg]) :
+	(reg != REG_M) ? (substrahend = i8080->REG[reg]) :
 		(substrahend = i8080->MEM[i8080->HL]);
 	i8080->A += (~substrahend + 1);
 
@@ -219,7 +247,7 @@ BYTE sbb(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
 	BYTE aprev = i8080->A;
 	BYTE substrahend;
-	(reg != REG_M) ? (substrahend = i8080->reg_b[reg]) :
+	(reg != REG_M) ? (substrahend = i8080->REG[reg]) :
 		(substrahend = i8080->MEM[i8080->HL]);
 	substrahend += i8080->status.C;
 	i8080->A += (~substrahend + 1);
@@ -234,7 +262,7 @@ BYTE sbb(INTEL_8080* i8080) {
 
 BYTE ana(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
-	(reg != REG_M) ? (i8080->A &= i8080->reg_b[reg]) :
+	(reg != REG_M) ? (i8080->A &= i8080->REG[reg]) :
 		(i8080->A &= i8080->MEM[i8080->HL]);
 
 	i8080->status.C = 0;
@@ -247,7 +275,7 @@ BYTE ana(INTEL_8080* i8080) {
 
 BYTE xra(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
-	(reg != REG_M) ? (i8080->A ^= i8080->reg_b[reg]) :
+	(reg != REG_M) ? (i8080->A ^= i8080->REG[reg]) :
 		(i8080->A ^= i8080->MEM[i8080->HL]);
 
 	i8080->status.C = 0;
@@ -261,7 +289,7 @@ BYTE xra(INTEL_8080* i8080) {
 
 BYTE ora(INTEL_8080* i8080) {
 	BYTE reg = acumulator_bits(i8080, 2, 0);
-	(reg != REG_M) ? (i8080->A |= i8080->reg_b[reg]) :
+	(reg != REG_M) ? (i8080->A |= i8080->REG[reg]) :
 		(i8080->A |= i8080->MEM[i8080->HL]);
 
 	i8080->status.C = 0;
@@ -293,89 +321,138 @@ BYTE rar(INTEL_8080* i8080) {
 }
 
 BYTE push(INTEL_8080* i8080) {
+	i8080->SP -= 2;
+	write_word_on_stack(i8080, i8080->REG_W[opcode_bits(i8080, 5, 4)]);
 	return 1;
 }
 
 BYTE pop(INTEL_8080* i8080) {
+	i8080->REG_W[opcode_bits(i8080, 5, 4)] = read_word_from_stack(i8080);
+	i8080->SP += 2;
 	return 1;
 }
 
 BYTE dad(INTEL_8080* i8080) {
+	DWORD carry = i8080->HL;
+	BYTE pair = opcode_bits(i8080, 5, 4);
+	(pair != REG_PAIR_SP) ? (carry += i8080->REG_W[pair]) : (carry += i8080->SP);
+	i8080->status.C = carry >> 16;
+	i8080->HL = carry;
 	return 1;
 }
 
 BYTE inx(INTEL_8080* i8080) {
+	BYTE pair = opcode_bits(i8080, 5, 4);
+	(pair != REG_PAIR_SP) ? (i8080->REG_W[pair]++) : (i8080->SP++);
 	return 1;
 }
 
 BYTE dcx(INTEL_8080* i8080) {
+	BYTE pair = opcode_bits(i8080, 5, 4);
+	(pair != REG_PAIR_SP) ? (i8080->REG_W[pair]--) : (i8080->SP--);
 	return 1;
 }
 
 BYTE xchg(INTEL_8080* i8080) {
+	WORD tmp = i8080->DE;
+	i8080->DE = i8080->HL;
+	i8080->HL = tmp;
 	return 1;
 }
 
 BYTE xthl(INTEL_8080* i8080) {
+	BYTE tmp = i8080->L;
+	i8080->L = i8080->MEM[i8080->SP];
+	i8080->MEM[i8080->SP] = tmp;
+	tmp = i8080->H;
+	i8080->H = i8080->MEM[i8080->SP + 1];
+	i8080->MEM[i8080->SP + 1] = tmp;
 	return 1;
 }
 
 BYTE sphl(INTEL_8080* i8080) {
+	i8080->SP = i8080->HL;
 	return 1;
 }
 
 BYTE mvi(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
-	(reg != REG_M) ? (i8080->reg_b[reg] = byte_arg(i8080)) :
+	(reg != REG_M) ? (i8080->REG[reg] = byte_arg(i8080)) :
 		(i8080->MEM[i8080->HL] = byte_arg(i8080));
 	return 2;
 }
 
 BYTE adi(INTEL_8080* i8080) {
+	DWORD carry = i8080->A + byte_arg(i8080);
+	i8080->A = carry;
+	set_flags(i8080, carry, 1, 1, 1, 1, 1);
 	return 2;
 }
 
 BYTE aci(INTEL_8080* i8080) {
+	DWORD carry = i8080->A + byte_arg(i8080) + i8080->status.C;
+	i8080->A = carry;
+	set_flags(i8080, carry, 1, 1, 1, 1, 1);
 	return 2;
 }
 
 BYTE sui(INTEL_8080* i8080) {
+	DWORD carry = i8080->A - byte_arg(i8080);
+	i8080->A = carry;
+	set_flags(i8080, carry, 1, 1, 1, 1, 1);
 	return 2;
 }
 
 BYTE sbi(INTEL_8080* i8080) {
+	DWORD carry = i8080->A - byte_arg(i8080) + i8080->status.C;
+	i8080->A = carry;
+	set_flags(i8080, carry, 1, 1, 1, 1, 1);
 	return 2;
 }
 
 BYTE ani(INTEL_8080* i8080) {
+	i8080->A &= byte_arg(i8080);
+	set_flags(i8080, i8080->A, 1, 1, 1, 1, 0);
 	return 2;
 }
 
 BYTE xri(INTEL_8080* i8080) {
+	i8080->A ^= byte_arg(i8080);
+	set_flags(i8080, i8080->A, 1, 1, 1, 1, 0);
 	return 2;
 }
 
 BYTE ori(INTEL_8080* i8080) {
+	i8080->A |= byte_arg(i8080);
+	set_flags(i8080, i8080->A, 1, 1, 1, 1, 0);
 	return 2;
 }
 
 BYTE cpi(INTEL_8080* i8080) {
+	DWORD carry = i8080->A - byte_arg(i8080);
+	set_flags(i8080, carry, 1, 1, 1, 1, 1);
 	return 2;
 }
 
 BYTE sta(INTEL_8080* i8080) {
+	i8080->MEM[word_arg(i8080)] = i8080->A;
 	return 3;
 }
 
 BYTE lda(INTEL_8080* i8080) {
+	i8080->A = i8080->MEM[word_arg(i8080)];
 	return 3;
 }
 
 BYTE shld(INTEL_8080* i8080) {
+	i8080->MEM[word_arg(i8080)] = i8080->L;
+	i8080->MEM[word_arg(i8080) + 1] = i8080->H;
 	return 3;
 }
 
 BYTE lhld(INTEL_8080* i8080) {
+	i8080->L = i8080->MEM[word_arg(i8080)];
+	i8080->H = i8080->MEM[word_arg(i8080) + 1];
 	return 3;
 }
 
@@ -418,7 +495,7 @@ BYTE jpo(INTEL_8080* i8080) {
 
 BYTE call(INTEL_8080* i8080) {
 	i8080->SP -= 2;
-	i8080->MEM_W[i8080->SP >> 1] = i8080->PC + 3;
+	write_word_on_stack(i8080, i8080->PC + 3);
 	return jmp(i8080);
 }
 
@@ -455,7 +532,7 @@ BYTE cpo(INTEL_8080* i8080) {
 }
 
 BYTE ret(INTEL_8080* i8080) {
-	i8080->PC = i8080->MEM_W[i8080->SP >> 1];
+	i8080->PC = read_word_from_stack(i8080);
 	i8080->SP += 2;
 	return 0;
 }

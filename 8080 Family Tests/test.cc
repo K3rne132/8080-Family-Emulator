@@ -24,19 +24,19 @@ TEST_F(Intel8080FixtureTests, RegistersByteWordIndexingTest) {
 	InitializePairs();
 
 	// check
-	ASSERT_EQ(CPU.B, CPU.reg_b[REG_B]);
-	ASSERT_EQ(CPU.C, CPU.reg_b[REG_C]);
-	ASSERT_EQ(CPU.D, CPU.reg_b[REG_D]);
-	ASSERT_EQ(CPU.E, CPU.reg_b[REG_E]);
-	ASSERT_EQ(CPU.H, CPU.reg_b[REG_H]);
-	ASSERT_EQ(CPU.L, CPU.reg_b[REG_L]);
-	ASSERT_EQ(CPU.F, CPU.reg_b[REG_M]); // flags <=> memory
-	ASSERT_EQ(CPU.A, CPU.reg_b[REG_A]);
+	ASSERT_EQ(CPU.B, CPU.REG[REG_B]);
+	ASSERT_EQ(CPU.C, CPU.REG[REG_C]);
+	ASSERT_EQ(CPU.D, CPU.REG[REG_D]);
+	ASSERT_EQ(CPU.E, CPU.REG[REG_E]);
+	ASSERT_EQ(CPU.H, CPU.REG[REG_H]);
+	ASSERT_EQ(CPU.L, CPU.REG[REG_L]);
+	ASSERT_EQ(CPU.F, CPU.REG[REG_M]); // flags <=> memory
+	ASSERT_EQ(CPU.A, CPU.REG[REG_A]);
 
-	ASSERT_EQ(CPU.BC,  CPU.reg_w[REG_PAIR_BC]);
-	ASSERT_EQ(CPU.DE,  CPU.reg_w[REG_PAIR_DE]);
-	ASSERT_EQ(CPU.HL,  CPU.reg_w[REG_PAIR_HL]);
-	ASSERT_EQ(CPU.PSW, CPU.reg_w[REG_PAIR_SP]); // psw <=> sp
+	ASSERT_EQ(CPU.BC,  CPU.REG_W[REG_PAIR_BC]);
+	ASSERT_EQ(CPU.DE,  CPU.REG_W[REG_PAIR_DE]);
+	ASSERT_EQ(CPU.HL,  CPU.REG_W[REG_PAIR_HL]);
+	ASSERT_EQ(CPU.PSW, CPU.REG_W[REG_PAIR_SP]); // psw <=> sp
 }
 
 TEST_F(Intel8080FixtureTests, StatusFlagTest) {

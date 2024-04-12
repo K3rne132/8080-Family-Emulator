@@ -16,7 +16,7 @@ typedef enum _REG {
 	REG_L,	   // 101b for register L
 	REG_M,	   // 110b for memory ref. M
 	REG_A	   // 111b for register A
-} REG;
+} REG_ID;
 
 // REGISTER PAIR INSTRUCTIONS
 typedef enum _REG_PAIR {
@@ -24,7 +24,7 @@ typedef enum _REG_PAIR {
 	REG_PAIR_DE,     // 01b for registers D and E
 	REG_PAIR_HL,     // 10b for registers H and L
 	REG_PAIR_SP      // 11b for flags and register A OR stack pointer
-} REG_PAIR;
+} REG_PAIR_ID;
 
 
 
@@ -53,10 +53,7 @@ typedef struct _status {
 // Intel 8080 registers set
 typedef struct _INTEL_8080 {
 	// pointer to 64k memory
-	union {
-		BYTE* MEM;
-		WORD* MEM_W;
-	};
+	BYTE* MEM;
 
 	BYTE* PORT; // 0 - 255 I/O ports
 
@@ -64,8 +61,8 @@ typedef struct _INTEL_8080 {
 	WORD SP; // Stack Pointer
 
 	union {
-		WORD reg_w[4]; // register pairs: BC(0), DE(1), HL(2), AF(3)
-		BYTE reg_b[8]; // regs: B(0), C(1), D(2), E(3), H(4), L(5), F(6), A(7)
+		BYTE REG[8]; // regs: B(0), C(1), D(2), E(3), H(4), L(5), F(6), A(7)
+		WORD REG_W[4]; // register pairs: BC(0), DE(1), HL(2), AF(3)
 
 		struct {
 			union {
