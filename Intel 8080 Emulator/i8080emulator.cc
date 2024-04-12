@@ -27,14 +27,14 @@ const static INSTRUCTION OPCODE_TABLE[256] = {
 	xra, xra, xra, xra, xra, xra, xra, xra, // 0xA8 - 0xAF
 	ora, ora, ora, ora, ora, ora, ora, ora, // 0xB0 - 0xB7
 	cmp, cmp, cmp, cmp, cmp, cmp, cmp, cmp, // 0xB8 - 0xBF
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, rst, // 0xC0 - 0xC7
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, rst, // 0xC8 - 0xCF
-	NULL, NULL, NULL, out, NULL, NULL, NULL, rst, // 0xD0 - 0xD7
-	NULL, NULL, NULL, in, NULL, NULL, NULL, rst, // 0xD8 - 0xDF
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, rst, // 0xE0 - 0xE7
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, rst, // 0xE8 - 0xEF
-	NULL, NULL, NULL, di, NULL, NULL, NULL, rst, // 0xF0 - 0xF7
-	NULL, NULL, NULL, ei, NULL, NULL, NULL, rst  // 0xF8 - 0xFF
+	rnz, NULL, jnz, NULL, cnz, NULL, NULL, rst, // 0xC0 - 0xC7
+	rz, ret, jz, NULL, cz, call, NULL, rst, // 0xC8 - 0xCF
+	rnc, NULL, jnc, out, cnc, NULL, NULL, rst, // 0xD0 - 0xD7
+	rc, NULL, jc, in, cc, NULL, NULL, rst, // 0xD8 - 0xDF
+	rpo, NULL, jpo, NULL, cpo, NULL, NULL, rst, // 0xE0 - 0xE7
+	rpe, NULL, jpe, NULL, cpe, NULL, NULL, rst, // 0xE8 - 0xEF
+	rp, NULL, jp, di, cp, NULL, NULL, rst, // 0xF0 - 0xF7
+	rm, NULL, jm, ei, cm, NULL, NULL, rst  // 0xF8 - 0xFF
 };
 
 static inline int initialize(

@@ -45,7 +45,9 @@ static BYTE byte_arg(const INTEL_8080* i8080) {
 
 // returns a current word argument at address of program counter + 1
 static WORD word_arg(const INTEL_8080* i8080) {
-	return i8080->MEM_W[i8080->PC + 1];
+	WORD result = i8080->MEM[i8080->PC + 1] << 8;
+	result |= i8080->MEM[i8080->PC + 2];
+	return result;
 }
 
 // returns parity flag for given value
@@ -387,36 +389,36 @@ BYTE jc(INTEL_8080* i8080) {
 }
 
 BYTE jnc(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.C ? jmp(i8080) : 3;
 }
 
 BYTE jz(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.Z ? jmp(i8080) : 3;
 }
 
 BYTE jnz(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.Z ? jmp(i8080) : 3;
 }
 
 BYTE jm(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.S ? jmp(i8080) : 3;
 }
 
 BYTE jp(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.S ? jmp(i8080) : 3;
 }
 
 BYTE jpe(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.P ? jmp(i8080) : 3;
 }
 
 BYTE jpo(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.P ? jmp(i8080) : 3;
 }
 
 BYTE call(INTEL_8080* i8080) {
 	i8080->SP -= 2;
-	i8080->MEM[i8080->SP] = i8080->PC + 3;
+	i8080->MEM_W[i8080->SP >> 1] = i8080->PC + 3;
 	return jmp(i8080);
 }
 
@@ -425,35 +427,35 @@ BYTE cc(INTEL_8080* i8080) {
 }
 
 BYTE cnc(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.C ? call(i8080) : 3;
 }
 
 BYTE cz(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.Z ? call(i8080) : 3;
 }
 
 BYTE cnz(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.Z ? call(i8080) : 3;
 }
 
 BYTE cm(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.S ? call(i8080) : 3;
 }
 
 BYTE cp(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.S ? call(i8080) : 3;
 }
 
 BYTE cpe(INTEL_8080* i8080) {
-	return 3;
+	return i8080->status.P ? call(i8080) : 3;
 }
 
 BYTE cpo(INTEL_8080* i8080) {
-	return 3;
+	return !i8080->status.P ? call(i8080) : 3;
 }
 
 BYTE ret(INTEL_8080* i8080) {
-	i8080->PC = i8080->MEM[i8080->SP];
+	i8080->PC = i8080->MEM_W[i8080->SP >> 1];
 	i8080->SP += 2;
 	return 0;
 }
@@ -463,31 +465,31 @@ BYTE rc(INTEL_8080* i8080) {
 }
 
 BYTE rnc(INTEL_8080* i8080) {
-	return 1;
+	return !i8080->status.C ? ret(i8080) : 1;
 }
 
 BYTE rz(INTEL_8080* i8080) {
-	return 1;
+	return i8080->status.Z ? ret(i8080) : 1;
 }
 
 BYTE rnz(INTEL_8080* i8080) {
-	return 1;
+	return !i8080->status.Z ? ret(i8080) : 1;
 }
 
 BYTE rm(INTEL_8080* i8080) {
-	return 1;
+	return i8080->status.S ? ret(i8080) : 1;
 }
 
 BYTE rp(INTEL_8080* i8080) {
-	return 1;
+	return !i8080->status.S ? ret(i8080) : 1;
 }
 
 BYTE rpe(INTEL_8080* i8080) {
-	return 1;
+	return i8080->status.P ? ret(i8080) : 1;
 }
 
 BYTE rpo(INTEL_8080* i8080) {
-	return 1;
+	return !i8080->status.P ? ret(i8080) : 1;
 }
 
 BYTE rst(INTEL_8080* i8080) {

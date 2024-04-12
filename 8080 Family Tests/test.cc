@@ -67,62 +67,141 @@ TEST_F(Intel8080FixtureTests, StatusFlagTest) {
 	ASSERT_EQ(CPU.F, 0b11010101);
 }
 
-TEST_F(Intel8080FixtureTests, CarryBitInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, SingleRegisterInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, DataTransferInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, RegisterOrMemoryToAccumulatorInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, RotateAccumulatorInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, RegisterPairInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, RImmediateInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, DirectAddressingInstructionsTest) {
-
-}
-
 TEST_F(Intel8080FixtureTests, JumpInstructionsTest) {
+	// init
+	SetWORDInMemory(0x12, 0x34, 0x0001); // opcode does not matter here
+	INSTRUCTION jump_cc[8] = { jc, jnc, jz, jnz, jm, jp, jpe, jpo };
+	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
+	
+	// then
+	CPU.PC += jmp(&CPU);
 
+	// check
+	ASSERT_EQ(CPU.PC, 0x1234);
+
+	for (BYTE i = 0; i < 4; i++) {
+		std::cerr << "Testing " << cc_name[i] << " flag jump\n";
+		// init for jump conditions
+		CPU.PC = 0;
+		CPU.F = 0;
+
+		// then check for unset flag
+		CPU.PC += jump_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, 0x0003);
+		CPU.PC = 0;
+		CPU.PC += jump_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, 0x1234);
+
+		// set proper flag
+		switch (i) {
+		case 0: CPU.status.C = 1; break; // CARRY
+		case 1: CPU.status.Z = 1; break; // ZERO
+		case 2: CPU.status.S = 1; break; // SIGN
+		case 3: CPU.status.P = 1; break; // PARITY
+		}
+
+		// then check for set flag
+		CPU.PC = 0;
+		CPU.PC += jump_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, 0x1234);
+		CPU.PC = 0;
+		CPU.PC += jump_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, 0x0003);
+	}
 }
 
-TEST_F(Intel8080FixtureTests, CallInstructionsTest) {
+TEST_F(Intel8080FixtureTests, CallSubroutineInstructionsTest) {
+	// init current PC at address 0x5678
+	CPU.PC = 0x5678;
+	const WORD next_inst_addr = 0x5678 + 3;
+	SetWORDInMemory(0x12, 0x34, CPU.PC + 1); // opcode does not matter here
+	INSTRUCTION call_cc[8] = { cc, cnc, cz, cnz, cm, cp, cpe, cpo };
+	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 
+	// then
+	CPU.PC += call(&CPU);
+
+	// check
+	ASSERT_EQ(CPU.PC, 0x1234);
+	ASSERT_EQ(GetWORDFromMemory(CPU.SP), next_inst_addr);
+
+	for (BYTE i = 0; i < 4; i++) {
+		std::cerr << "Testing " << cc_name[i] << " flag call\n";
+		// init for call conditions
+		CPU.PC = 0x5678;
+		CPU.F = 0;
+
+		// then check for unset flag
+		CPU.PC += call_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, next_inst_addr);
+		CPU.PC = 0x5678;
+		CPU.PC += call_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, 0x1234);
+		ASSERT_EQ(GetWORDFromMemory(CPU.SP), next_inst_addr);
+
+		// set proper flag
+		switch (i) {
+		case 0: CPU.status.C = 1; break; // CARRY
+		case 1: CPU.status.Z = 1; break; // ZERO
+		case 2: CPU.status.S = 1; break; // SIGN
+		case 3: CPU.status.P = 1; break; // PARITY
+		}
+
+		// then check for set flag
+		CPU.PC = 0x5678;
+		CPU.PC += call_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, 0x1234);
+		ASSERT_EQ(GetWORDFromMemory(CPU.SP), next_inst_addr);
+		CPU.PC = 0x5678;
+		CPU.PC += call_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, next_inst_addr);
+	}
 }
 
-TEST_F(Intel8080FixtureTests, ReturnInstructionsTest) {
+TEST_F(Intel8080FixtureTests, ReturnFromSubroutineInstructionsTest) {
+	// init
+	CPU.SP = 0x8000;
+	SetWORDInMemory(0x34, 0x12, CPU.SP);
+	INSTRUCTION return_cc[8] = { rc, rnc, rz, rnz, rm, rp, rpe, rpo };
+	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 
-}
+	// then
+	CPU.PC += ret(&CPU);
 
-TEST_F(Intel8080FixtureTests, RSTInstructionTest) {
+	// check
+	ASSERT_EQ(CPU.PC, 0x1234);
 
-}
+	for (BYTE i = 0; i < 4; i++) {
+		std::cerr << "Testing " << cc_name[i] << " flag return\n";
+		// init for return conditions
+		CPU.PC = 0;
+		SetWORDInMemory(0x34, 0x12, CPU.SP);
+		CPU.F = 0;
 
-TEST_F(Intel8080FixtureTests, InterruptFlipFlopInstructionsTest) {
+		// then check for unset flag
+		CPU.PC += return_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, 0x0001);
+		CPU.PC = 0;
+		SetWORDInMemory(0x34, 0x12, CPU.SP);
+		CPU.PC += return_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, 0x1234);
 
-}
+		// set proper flag
+		switch (i) {
+		case 0: CPU.status.C = 1; break; // CARRY
+		case 1: CPU.status.Z = 1; break; // ZERO
+		case 2: CPU.status.S = 1; break; // SIGN
+		case 3: CPU.status.P = 1; break; // PARITY
+		}
 
-TEST_F(Intel8080FixtureTests, InputOutputInstructionsTest) {
-
-}
-
-TEST_F(Intel8080FixtureTests, HLTInstructionTest) {
-
+		// then check for set flag
+		CPU.PC = 0;
+		SetWORDInMemory(0x34, 0x12, CPU.SP);
+		CPU.PC += return_cc[i * 2](&CPU); // flag
+		ASSERT_EQ(CPU.PC, 0x1234);
+		CPU.PC = 0;
+		SetWORDInMemory(0x34, 0x12, CPU.SP);
+		CPU.PC += return_cc[i * 2 + 1](&CPU); // not flag
+		ASSERT_EQ(CPU.PC, 0x0001);
+	}
 }
