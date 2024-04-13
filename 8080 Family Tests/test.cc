@@ -69,7 +69,7 @@ TEST_F(Intel8080FixtureTests, StatusFlagTest) {
 
 TEST_F(Intel8080FixtureTests, JumpInstructionsTest) {
 	// init
-	SetWORDInMemory(0x12, 0x34, 0x0001); // opcode does not matter here
+	SetWORDInMemory(0x34, 0x12, 0x0001); // opcode does not matter here
 	INSTRUCTION jump_cc[8] = { jc, jnc, jz, jnz, jm, jp, jpe, jpo };
 	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 	
@@ -114,7 +114,7 @@ TEST_F(Intel8080FixtureTests, CallSubroutineInstructionsTest) {
 	// init current PC at address 0x5678
 	CPU.PC = 0x5678;
 	const WORD next_inst_addr = 0x5678 + 3;
-	SetWORDInMemory(0x12, 0x34, CPU.PC + 1); // opcode does not matter here
+	SetWORDInMemory(0x34, 0x12, CPU.PC + 1); // opcode does not matter here
 	INSTRUCTION call_cc[8] = { cc, cnc, cz, cnz, cm, cp, cpe, cpo };
 	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 

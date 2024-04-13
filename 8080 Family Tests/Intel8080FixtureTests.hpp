@@ -21,8 +21,8 @@ protected:
     // return WORD in big endian order
     WORD GetWORDFromMemory(WORD address) {
         WORD result = 0;
-        result = CPU.MEM[address] << 8;
-        result |= CPU.MEM[address + 1];
+        result = CPU.MEM[address + 1] << 8;
+        result |= CPU.MEM[address];
         return result;
     }
     

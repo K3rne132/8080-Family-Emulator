@@ -30,8 +30,8 @@ static BYTE byte_arg(const INTEL_8080* i8080) {
 
 // returns a current word argument at address of program counter + 1
 static WORD word_arg(const INTEL_8080* i8080) {
-	WORD result = i8080->MEM[i8080->PC + 1] << 8;
-	result |= i8080->MEM[i8080->PC + 2];
+	WORD result = i8080->MEM[i8080->PC + 2] << 8;
+	result |= i8080->MEM[i8080->PC + 1];
 	return result;
 }
 
@@ -64,8 +64,8 @@ static void set_flags(
 
 // writes word at memory address pointed by SP
 static void write_word_on_stack(INTEL_8080* i8080, WORD word) {
-	i8080->MEM[i8080->SP] = word >> 8;
-	i8080->MEM[i8080->SP + 1] = (BYTE)word;
+	i8080->MEM[i8080->SP + 1] = word >> 8;
+	i8080->MEM[i8080->SP] = (BYTE)word;
 }
 
 // read word from memory address pointed by SP
