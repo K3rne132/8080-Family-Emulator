@@ -42,14 +42,14 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 };
 
 static const char* OPCODE_NAME[256] = {
-	"NOP", "LXI B,%#06x", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%#04x", "RLC", // 0x00 - 0x07
-	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%#04x", "RRC", // 0x08 - 0x0F
-	"NOP", "LXI D,%#06x", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%#04x", "RAL", // 0x10 - 0x17
-	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%#04x", "RAR", // 0x18 - 0x1F
-	"NOP", "LXI H,%#06x", "SHLD %#06x", "INX H", "INR H", "DCR H", "MVI H,%#04x", "DAA", // 0x20 - 0x27
-	"NOP", "DAD H", "LHLD %#06x", "DCX H", "INR L", "DCR L", "MVI L,%#04x", "CMA", // 0x28 - 0x2F
-	"NOP", "LXI SP,%#06x", "STA %#06x", "INX SP", "INR M", "DCR M", "MVI M,%#04x", "STC", // 0x30 - 0x37
-	"NOP", "DAD SP", "LDA %#06x", "DCX SP", "INR A", "DCR A", "MVI A,%#04x", "CMC", // 0x38 - 0x3F
+	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
+	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
+	"NOP", "LXI D,%hXh", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%hhXh", "RAL", // 0x10 - 0x17
+	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%hhXh", "RAR", // 0x18 - 0x1F
+	"NOP", "LXI H,%hXh", "SHLD %hXh", "INX H", "INR H", "DCR H", "MVI H,%hhXh", "DAA", // 0x20 - 0x27
+	"NOP", "DAD H", "LHLD %hXh", "DCX H", "INR L", "DCR L", "MVI L,%hhXh", "CMA", // 0x28 - 0x2F
+	"NOP", "LXI SP,%hXh", "STA %hXh", "INX SP", "INR M", "DCR M", "MVI M,%hhXh", "STC", // 0x30 - 0x37
+	"NOP", "DAD SP", "LDA %hXh", "DCX SP", "INR A", "DCR A", "MVI A,%hhXh", "CMC", // 0x38 - 0x3F
 	"MOV B,B", "MOV B,C", "MOV B,D", "MOV B,E", "MOV B,H", "MOV B,L", "MOV B,M", "MOV B,A", // 0x40 - 0x47
 	"MOV C,B", "MOV C,C", "MOV C,D", "MOV C,E", "MOV C,H", "MOV C,L", "MOV C,M", "MOV C,A", // 0x48 - 0x4F
 	"MOV D,B", "MOV D,C", "MOV D,D", "MOV D,E", "MOV D,H", "MOV D,L", "MOV D,M", "MOV D,A", // 0x50 - 0x57
@@ -66,14 +66,14 @@ static const char* OPCODE_NAME[256] = {
 	"XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A", // 0xA8 - 0xAF
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", // 0xB0 - 0xB7
 	"CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A", // 0xB8 - 0xBF
-	"RNZ", "POP B", "JNZ %#06x", "JMP %#06x", "CNZ %#06x", "PUSH B", "ADI %#04x", "RST 0", // 0xC0 - 0xC7
-	"RZ", "RET", "JZ %#06x", "NOP", "CZ %#06x", "CALL %#06x", "ACI %#04x", "RST 1", // 0xC8 - 0xCF
-	"RNC", "POP D", "JNC %#06x", "OUT %#04x", "CNC %#06x", "PUSH D", "SUI %#04x", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %#06x", "IN %#04x", "CC %#06x", "NOP", "SBI %#04x", "RST 3", // 0xD8 - 0xDF
-	"RPO", "POP H", "JPO %#06x", "XTHL", "CPO %#06x", "PUSH H", "ANI %#04x", "RST 4", // 0xE0 - 0xE7
-	"RPE", "PCHL", "JPE %#06x", "XCHG", "CPE %#06x", "NOP", "XRI %#04x", "RST 5", // 0xE8 - 0xEF
-	"RP", "POP PSW", "JP %#06x", "DI", "CP %#06x", "PUSH PSW", "ORI %#04x", "RST 6", // 0xF0 - 0xF7
-	"RM", "SPHL", "JM %#06x", "EI", "CM %#06x", "NOP", "CPI %#04x", "RST 7" // 0xF8 - 0xFF
+	"RNZ", "POP B", "JNZ %hXh", "JMP %hXh", "CNZ %hXh", "PUSH B", "ADI %hhXh", "RST 0", // 0xC0 - 0xC7
+	"RZ", "RET", "JZ %hXh", "NOP", "CZ %hXh", "CALL %hXh", "ACI %hhXh", "RST 1", // 0xC8 - 0xCF
+	"RNC", "POP D", "JNC %hXh", "OUT %hhXh", "CNC %hXh", "PUSH D", "SUI %hhXh", "RST 2", // 0xD0 - 0xD7
+	"RC", "NOP", "JC %hXh", "IN %hhXh", "CC %hXh", "NOP", "SBI %hhXh", "RST 3", // 0xD8 - 0xDF
+	"RPO", "POP H", "JPO %hXh", "XTHL", "CPO %hXh", "PUSH H", "ANI %hhXh", "RST 4", // 0xE0 - 0xE7
+	"RPE", "PCHL", "JPE %hXh", "XCHG", "CPE %hXh", "NOP", "XRI %hhXh", "RST 5", // 0xE8 - 0xEF
+	"RP", "POP PSW", "JP %hXh", "DI", "CP %hXh", "PUSH PSW", "ORI %hhXh", "RST 6", // 0xF0 - 0xF7
+	"RM", "SPHL", "JM %hXh", "EI", "CM %hXh", "NOP", "CPI %hhXh", "RST 7" // 0xF8 - 0xFF
 };
 
 static WORD word_arg(const INTEL_8080* i8080) {
@@ -158,8 +158,8 @@ static inline int write_file_to_memory(
 	long size = ftell(file);
 	if (size + address > 0xFFFF) {
 		fclose(file);
-		fprintf(stderr, "Filename %s with size %#06x bytes is too large to "
-			"be loaded at address %#06x\n", filename, size, address);
+		fprintf(stderr, "Filename %s with size %hXh bytes is too large to "
+			"be loaded at address %hXh\n", filename, size, address);
 		return 1;
 	}
 	fseek(file, 0, SEEK_SET);
@@ -192,8 +192,19 @@ static void instruction_print(
 	INTEL_8080* i8080,
 	BYTE instruction
 ) {
-	printf(OPCODE_NAME[instruction], word_arg(i8080));
-	printf("        PC = %#06x\n", i8080->PC);
+	WORD be = word_arg(i8080);
+	printf("PC = %hXh    ", i8080->PC);
+	printf(OPCODE_NAME[instruction], ((be >> 8) | (be << 8)));
+	puts("");
+}
+
+static void register_print(
+	INTEL_8080* i8080
+) {
+	WORD be = word_arg(i8080);
+	printf("A=%hhX BC=%hX DE=%hX HL=%hX SP=%hX [S=%d Z=%d AC=%d P=%d C=%d]\n", i8080->A,
+		i8080->BC, i8080->DE, i8080->HL, i8080->SP, i8080->status.S, i8080->status.Z,
+		i8080->status.AC, i8080->status.P, i8080->status.C);
 }
 
 static inline int emulate(
@@ -201,6 +212,7 @@ static inline int emulate(
 	BOOL bdos
 ) {
 	while (1) {
+		//register_print(i8080);
 		if (i8080->INT && i8080->INT_PENDING) {
 			//instruction_print(i8080, i8080->INT_VECTOR);
 			i8080->SP -= 2;
@@ -229,7 +241,7 @@ int main(int argc, char** argv) {
 	}
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "8080EXM.COM", 0x0100);
+	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
 	emulate(&i8080, SET);
 	destroy(&i8080);
 }

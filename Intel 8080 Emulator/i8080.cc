@@ -186,7 +186,7 @@ BYTE sub(INTEL_8080* i8080) {
 }
 
 BYTE sbb(INTEL_8080* i8080) {
-	DWORD carry = i8080->A + i8080->status.C;
+	DWORD carry = i8080->A - i8080->status.C;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry -= num;
@@ -265,7 +265,6 @@ BYTE push(INTEL_8080* i8080) {
 }
 
 BYTE pop(INTEL_8080* i8080) {
-	i8080->F = (i8080->F & 0xD7) | 0x2;
 	i8080->REG_W[opcode_bits(i8080, 5, 4)] = read_word_from_stack(i8080);
 	i8080->SP += 2;
 	return 1;
@@ -357,7 +356,7 @@ BYTE sui(INTEL_8080* i8080) {
 
 BYTE sbi(INTEL_8080* i8080) {
 	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A - arg + i8080->status.C;
+	DWORD carry = i8080->A - arg - i8080->status.C;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) - (arg & 0xF) + i8080->status.C) > 0xF);
 	i8080->A = carry;

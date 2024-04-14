@@ -243,7 +243,7 @@ TEST_F(Intel8080FixtureTests, SUB_SBB_CMP_InstructionsTest) {
 	ASSERT_EQ(sub(&CPU), 1); // A - E = 0xDF
 	ASSERT_EQ(CPU.A, 0xDF);
 	ASSERT_EQ(CPU.F, 0b10010010);
-	ASSERT_EQ(sbb(&CPU), 1); // A - E + 0 = 0xC2
+	ASSERT_EQ(sbb(&CPU), 1); // A - E - 0 = 0xC2
 	ASSERT_EQ(CPU.A, 0xC2);
 	ASSERT_EQ(CPU.F, 0b10000010);
 
@@ -255,9 +255,9 @@ TEST_F(Intel8080FixtureTests, SUB_SBB_CMP_InstructionsTest) {
 	ASSERT_EQ(CPU.A, 0xB0);
 	ASSERT_EQ(CPU.F, 0b10000010);
 	CPU.status.C = 1;
-	sbb(&CPU); // A - M + 1 = 0x9F
-	ASSERT_EQ(CPU.A, 0x9F);
-	ASSERT_EQ(CPU.F, 0b10010110);
+	sbb(&CPU); // A - M - 1 = 0x9D
+	ASSERT_EQ(CPU.A, 0x9D);
+	ASSERT_EQ(CPU.F, 0b10010010);
 }
 
 TEST_F(Intel8080FixtureTests, ANA_XRA_ORA_InstructionsTest) {
@@ -458,14 +458,14 @@ TEST_F(Intel8080FixtureTests, SUI_SBI_CPI_InstructionsTest) {
 	ASSERT_EQ(CPU.A, 0x2F);
 	ASSERT_EQ(CPU.F, 0b00010011);
 	ASSERT_EQ(sbi(&CPU), 2);
-	ASSERT_EQ(CPU.A, 0x5F);
-	ASSERT_EQ(CPU.F, 0b00000111);
+	ASSERT_EQ(CPU.A, 0x5D);
+	ASSERT_EQ(CPU.F, 0b00000011);
 
 	// when carry is reset
 	CPU.status.C = 0;
 	sbi(&CPU);
-	ASSERT_EQ(CPU.A, 0x8E);
-	ASSERT_EQ(CPU.F, 0b10000111);
+	ASSERT_EQ(CPU.A, 0x8C);
+	ASSERT_EQ(CPU.F, 0b10000011);
 }
 
 TEST_F(Intel8080FixtureTests, ANI_XRI_ORI_InstructionsTest) {
