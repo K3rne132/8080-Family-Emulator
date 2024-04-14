@@ -1,8 +1,6 @@
 #include <assert.h>
 #include "i8080.h"
 
-#define MAKEWORD(low,high) ((WORD)((BYTE)low))|(((WORD)((BYTE)high))<<8)
-
 // returns a current opcode at address of program counter
 static BYTE opcode(const INTEL_8080* i8080) {
 	return i8080->MEM[i8080->PC];
@@ -54,10 +52,10 @@ static void set_flags(
 	const BOOL s, // sign affected
 	const BOOL p // parity affected
 ) {
-	c  ? i8080->status.C = result_with_carry >> 8 : 0;
-	z  ? i8080->status.Z = ((result_with_carry & 0xFF) == 0) : 0;
-	s  ? i8080->status.S = ((result_with_carry & 0xFF) >= 0x80) : 0;
-	p  ? i8080->status.P = parity_check(result_with_carry & 0xFF) : 0;
+	if (c) i8080->status.C = result_with_carry >> 8;
+	if (z) i8080->status.Z = ((result_with_carry & 0xFF) == 0);
+	if (s) i8080->status.S = ((result_with_carry & 0xFF) >= 0x80);
+	if (p) i8080->status.P = parity_check(result_with_carry & 0xFF);
 }
 
 // writes word at memory address pointed by SP
@@ -86,7 +84,7 @@ BYTE stc(INTEL_8080* i8080) {
 BYTE inr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	DWORD carry = 0;
-	carry = (reg != REG_M) ? (i8080->REG[reg]++) : (i8080->MEM[i8080->HL]++);
+	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]++) : (i8080->MEM[i8080->HL]++);
 	carry++;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = ((carry & 0xF) == 0) ? 1 : 0;
@@ -96,7 +94,7 @@ BYTE inr(INTEL_8080* i8080) {
 BYTE dcr(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
 	DWORD carry = 0;
-	carry = (reg != REG_M) ? (i8080->REG[reg]--) : (i8080->MEM[i8080->HL]--);
+	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]--) : (i8080->MEM[i8080->HL]--);
 	carry--;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = ((carry & 0xF) == 0xF) ? 1 : 0;
@@ -131,11 +129,11 @@ BYTE mov(INTEL_8080* i8080) {
 	BYTE src = opcode_bits(i8080, 2, 0);
 	BYTE dst = opcode_bits(i8080, 5, 3);
 	if (src != REG_M && dst != REG_M)
-		i8080->REG[dst] = i8080->REG[src];
+		i8080->REG[le_reg(dst)] = i8080->REG[le_reg(src)];
 	else if (src == REG_M)
-		i8080->REG[dst] = i8080->MEM[i8080->HL];
+		i8080->REG[le_reg(dst)] = i8080->MEM[i8080->HL];
 	else if (dst == REG_M)
-		i8080->MEM[i8080->HL] = i8080->REG[src];
+		i8080->MEM[i8080->HL] = i8080->REG[le_reg(src)];
 	else
 		assert(NULL);
 	return 1;
@@ -157,7 +155,7 @@ BYTE ldax(INTEL_8080* i8080) {
 BYTE add(INTEL_8080* i8080) {
 	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	DWORD num = (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry += num;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) + (num & 0xF)) > 0xF);
@@ -168,7 +166,7 @@ BYTE add(INTEL_8080* i8080) {
 BYTE adc(INTEL_8080* i8080) {
 	DWORD carry = i8080->A + i8080->status.C;
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	DWORD num = (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry += num;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) + (num & 0xF) + i8080->status.C) > 0xF);
@@ -179,7 +177,7 @@ BYTE adc(INTEL_8080* i8080) {
 BYTE sub(INTEL_8080* i8080) {
 	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	DWORD num = (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry -= num;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF)) > 0x0F);
@@ -190,7 +188,7 @@ BYTE sub(INTEL_8080* i8080) {
 BYTE sbb(INTEL_8080* i8080) {
 	DWORD carry = i8080->A + i8080->status.C;
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	DWORD num = (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry -= num;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF) + i8080->status.C) > 0xF);
@@ -200,21 +198,21 @@ BYTE sbb(INTEL_8080* i8080) {
 
 BYTE ana(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	i8080->A &= (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	i8080->A &= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	set_flags(i8080, i8080->A, 1, 1, 1, 1);
 	return 1;
 }
 
 BYTE xra(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	i8080->A ^= (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	i8080->A ^= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	set_flags(i8080, i8080->A, 1, 1, 1, 1);
 	return 1;
 }
 
 BYTE ora(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	i8080->A |= (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	i8080->A |= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	set_flags(i8080, i8080->A, 1, 1, 1, 1);
 	return 1;
 }
@@ -222,7 +220,7 @@ BYTE ora(INTEL_8080* i8080) {
 BYTE cmp(INTEL_8080* i8080) {
 	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	DWORD num = (reg != REG_M) ? (i8080->REG[reg]) : (i8080->MEM[i8080->HL]);
+	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	carry -= num;
 	set_flags(i8080, carry, 1, 1, 1, 1);
 	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF)) > 0xF);
@@ -266,6 +264,7 @@ BYTE push(INTEL_8080* i8080) {
 }
 
 BYTE pop(INTEL_8080* i8080) {
+	i8080->F = (i8080->F & 0xD7) | 0x2;
 	i8080->REG_W[opcode_bits(i8080, 5, 4)] = read_word_from_stack(i8080);
 	i8080->SP += 2;
 	return 1;
@@ -323,7 +322,7 @@ BYTE lxi(INTEL_8080* i8080) {
 
 BYTE mvi(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 5, 3);
-	(reg != REG_M) ? (i8080->REG[reg] = byte_arg(i8080)) :
+	(reg != REG_M) ? (i8080->REG[le_reg(reg)] = byte_arg(i8080)) :
 		(i8080->MEM[i8080->HL] = byte_arg(i8080));
 	return 2;
 }
@@ -532,7 +531,7 @@ BYTE rpo(INTEL_8080* i8080) {
 
 BYTE rst(INTEL_8080* i8080) {
 	i8080->SP -= 2;
-	i8080->MEM[i8080->SP] = i8080->PC + 1;
+	write_word_on_stack(i8080, i8080->PC + 1);
 	i8080->PC = opcode(i8080) & 0b00111000;
 	return 0;
 }

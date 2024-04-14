@@ -2,8 +2,6 @@
 #include "pch.h"
 #include "i8080.h"
 
-#define SWAPORDER(word) (WORD)((word>>8)|(word<<8))
-
 class Intel8080FixtureTests : public testing::Test {
 protected:
     INTEL_8080 CPU;

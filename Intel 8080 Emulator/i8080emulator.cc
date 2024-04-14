@@ -33,7 +33,7 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
 	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
 	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
-	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0x%#04x - 0xDF
+	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
 	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
 	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
 	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
@@ -68,7 +68,7 @@ static const char* OPCODE_NAME[256] = {
 	"RNZ", "POP B", "JNZ %#06x", "JMP %#06x", "CNZ %#06x", "PUSH B", "ADI %#04x", "RST 0", // 0xC0 - 0xC7
 	"RZ", "RET", "JZ %#06x", "NOP", "CZ %#06x", "CALL %#06x", "ACI %#04x", "RST 1", // 0xC8 - 0xCF
 	"RNC", "POP D", "JNC %#06x", "OUT %#04x", "CNC %#06x", "PUSH D", "SUI %#04x", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %#06x", "IN %#04x", "CC %#06x", "NOP", "SBI %#04x", "RST 3", // 0x%#04x - 0xDF
+	"RC", "NOP", "JC %#06x", "IN %#04x", "CC %#06x", "NOP", "SBI %#04x", "RST 3", // 0xD8 - 0xDF
 	"RPO", "POP H", "JPO %#06x", "XTHL", "CPO %#06x", "PUSH H", "ANI %#04x", "RST 4", // 0xE0 - 0xE7
 	"RPE", "PCHL", "JPE %#06x", "XCHG", "CPE %#06x", "NOP", "XRI %#04x", "RST 5", // 0xE8 - 0xEF
 	"RP", "POP PSW", "JP %#06x", "DI", "CP %#06x", "PUSH PSW", "ORI %#04x", "RST 6", // 0xF0 - 0xF7
@@ -177,9 +177,10 @@ static inline void read_memory(
 static inline void bdos_syscall(INTEL_8080* i8080) {
 	switch (i8080->C) {
 	case 2: putchar(i8080->E); break; // C_WRITE
-	case 9:
+	case 9: // C_WRITESTR
 		WORD index = i8080->DE;
-		while (putchar(i8080->MEM[index++]) != '$'); break; // C_WRITESTR
+		while (putchar(i8080->MEM[index++]) != '$');
+		break;
 	}
 }
 
@@ -196,12 +197,12 @@ static inline int emulate(
 ) {
 	while (1) {
 		if (i8080->INT && i8080->INT_PENDING) {
+			instruction_print(i8080, i8080->INT_VECTOR);
+			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
 			i8080->INT = 0;
 			i8080->INT_PENDING = 0;
 			i8080->INT_VECTOR = 0;
 			i8080->HALT = 0;
-			//instruction_print(i8080, i8080->INT_VECTOR);
-			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
 		}
 		else if (!i8080->HALT) {
 			if (i8080->PC == 0x0005)
@@ -221,8 +222,7 @@ int main(int argc, char** argv) {
 	}
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "TEST.COM", 0x0100);
-	read_memory(&i8080, 0x0100, 128);
+	write_file_to_memory(&i8080, "8080EXM.COM", 0x0100);
 	emulate(&i8080);
 	destroy(&i8080);
 }

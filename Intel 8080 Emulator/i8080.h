@@ -18,6 +18,11 @@ typedef enum _REG {
 	REG_A	   // 111b for register A
 } REG_ID;
 
+// returns real index of register in little endian machine
+static inline int le_reg(BYTE id) {
+	return (id % 2 == 1) ? (id - 1) : (id + 1);
+}
+
 // REGISTER PAIR INSTRUCTIONS
 typedef enum _REG_PAIR {
 	REG_PAIR_BC = 0, // 00b for registers B and C
@@ -68,35 +73,35 @@ typedef struct _INTEL_8080 {
 			union {
 				WORD BC; // B and C (0 and 1)
 				struct {
-					BYTE B;
 					BYTE C;
+					BYTE B;
 				};
 			};
 
 			union {
 				WORD DE; // D and E (2 and 3)
 				struct {
-					BYTE D;
 					BYTE E;
+					BYTE D;
 				};
 			};
 
 			union {
 				WORD HL; // H and L (4 and 5)
 				struct {
-					uint8_t H; // most significant 8 bits of the address
 					uint8_t L; // least significant 8 bits of the address
+					uint8_t H; // most significant 8 bits of the address
 				};
 			};
 
 			union {
 				WORD PSW; // Program Status Word - A and F (6 and 7)
 				struct {
+					BYTE A; // Accumulator Register
 					union {
 						BYTE F; // Flags (Status) Register
 						STATUS status;
 					};
-					BYTE A; // Accumulator Register
 				};
 			};
 

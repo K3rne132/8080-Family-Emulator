@@ -7,17 +7,17 @@ TEST_F(Intel8080FixtureTests, RegisterPairsEndiannessTest) {
 
 	// check - all register pairs are in big endian order (due to register
 	// ordering i.e. B = 0, C = 1, D = 2, E = 3)
-	ASSERT_EQ(CPU.B, 0x23);
-	ASSERT_EQ(CPU.C, 0x01);
+	ASSERT_EQ(CPU.B, 0x01);
+	ASSERT_EQ(CPU.C, 0x23);
 
-	ASSERT_EQ(CPU.D, 0x67);
-	ASSERT_EQ(CPU.E, 0x45);
+	ASSERT_EQ(CPU.D, 0x45);
+	ASSERT_EQ(CPU.E, 0x67);
 
-	ASSERT_EQ(CPU.H, 0xAB);
-	ASSERT_EQ(CPU.L, 0x89);
+	ASSERT_EQ(CPU.H, 0x89);
+	ASSERT_EQ(CPU.L, 0xAB);
 
-	ASSERT_EQ(CPU.F, 0xEF);
-	ASSERT_EQ(CPU.A, 0xCD);
+	ASSERT_EQ(CPU.F, 0xCD);
+	ASSERT_EQ(CPU.A, 0xEF);
 }
 
 TEST_F(Intel8080FixtureTests, RegistersByteWordIndexingTest) {
@@ -25,14 +25,14 @@ TEST_F(Intel8080FixtureTests, RegistersByteWordIndexingTest) {
 	InitializePairs();
 
 	// check
-	ASSERT_EQ(CPU.B, CPU.REG[REG_B]);
-	ASSERT_EQ(CPU.C, CPU.REG[REG_C]);
-	ASSERT_EQ(CPU.D, CPU.REG[REG_D]);
-	ASSERT_EQ(CPU.E, CPU.REG[REG_E]);
-	ASSERT_EQ(CPU.H, CPU.REG[REG_H]);
-	ASSERT_EQ(CPU.L, CPU.REG[REG_L]);
-	ASSERT_EQ(CPU.F, CPU.REG[REG_M]); // flags <=> memory
-	ASSERT_EQ(CPU.A, CPU.REG[REG_A]);
+	ASSERT_EQ(CPU.B, CPU.REG[le_reg(REG_B)]);
+	ASSERT_EQ(CPU.C, CPU.REG[le_reg(REG_C)]);
+	ASSERT_EQ(CPU.D, CPU.REG[le_reg(REG_D)]);
+	ASSERT_EQ(CPU.E, CPU.REG[le_reg(REG_E)]);
+	ASSERT_EQ(CPU.H, CPU.REG[le_reg(REG_H)]);
+	ASSERT_EQ(CPU.L, CPU.REG[le_reg(REG_L)]);
+	ASSERT_EQ(CPU.F, CPU.REG[le_reg(REG_M)]); // flags <=> memory
+	ASSERT_EQ(CPU.A, CPU.REG[le_reg(REG_A)]);
 
 	ASSERT_EQ(CPU.BC,  CPU.REG_W[REG_PAIR_BC]);
 	ASSERT_EQ(CPU.DE,  CPU.REG_W[REG_PAIR_DE]);
@@ -364,7 +364,7 @@ TEST_F(Intel8080FixtureTests, RegisterPairInstructionsTest) {
 	ASSERT_EQ(CPU.DE, 0x1234);
 	ASSERT_EQ(xthl(&CPU), 1);
 	ASSERT_EQ(CPU.HL, 0x9876);
-	ASSERT_EQ(GetWORDFromMemory(CPU.SP), SWAPORDER(0xABCD));
+	ASSERT_EQ(GetWORDFromMemory(CPU.SP), 0xABCD);
 	ASSERT_EQ(sphl(&CPU), 1);
 	ASSERT_EQ(CPU.SP, 0x9876);
 }
