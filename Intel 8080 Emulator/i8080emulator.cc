@@ -33,7 +33,7 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
 	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
 	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
-	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
+	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0x%#04x - 0xDF
 	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
 	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
 	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
@@ -41,14 +41,14 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 };
 
 static const char* OPCODE_NAME[256] = {
-	"NOP", "LXI B,%#06x", "STAX B", "INX B", "INR B", "DCR B", "MVI B,d8", "RLC", // 0x00 - 0x07
-	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,d8", "RRC", // 0x08 - 0x0F
-	"NOP", "LXI D,%#06x", "STAX D", "INX D", "INR D", "DCR D", "MVI D,d8", "RAL", // 0x10 - 0x17
-	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,d8", "RAR", // 0x18 - 0x1F
-	"NOP", "LXI H,%#06x", "SHLD %#06x", "INX H", "INR H", "DCR H", "MVI H,d8", "DAA", // 0x20 - 0x27
-	"NOP", "DAD H", "LHLD %#06x", "DCX H", "INR L", "DCR L", "MVI L,d8", "CMA", // 0x28 - 0x2F
-	"NOP", "LXI SP,%#06x", "STA %#06x", "INX SP", "INR M", "DCR M", "MVI M,d8", "STC", // 0x30 - 0x37
-	"NOP", "DAD SP", "LDA %#06x", "DCX SP", "INR A", "DCR A", "MVI A,d8", "CMC", // 0x38 - 0x3F
+	"NOP", "LXI B,%#06x", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%#04x", "RLC", // 0x00 - 0x07
+	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%#04x", "RRC", // 0x08 - 0x0F
+	"NOP", "LXI D,%#06x", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%#04x", "RAL", // 0x10 - 0x17
+	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%#04x", "RAR", // 0x18 - 0x1F
+	"NOP", "LXI H,%#06x", "SHLD %#06x", "INX H", "INR H", "DCR H", "MVI H,%#04x", "DAA", // 0x20 - 0x27
+	"NOP", "DAD H", "LHLD %#06x", "DCX H", "INR L", "DCR L", "MVI L,%#04x", "CMA", // 0x28 - 0x2F
+	"NOP", "LXI SP,%#06x", "STA %#06x", "INX SP", "INR M", "DCR M", "MVI M,%#04x", "STC", // 0x30 - 0x37
+	"NOP", "DAD SP", "LDA %#06x", "DCX SP", "INR A", "DCR A", "MVI A,%#04x", "CMC", // 0x38 - 0x3F
 	"MOV B,B", "MOV B,C", "MOV B,D", "MOV B,E", "MOV B,H", "MOV B,L", "MOV B,M", "MOV B,A", // 0x40 - 0x47
 	"MOV C,B", "MOV C,C", "MOV C,D", "MOV C,E", "MOV C,H", "MOV C,L", "MOV C,M", "MOV C,A", // 0x48 - 0x4F
 	"MOV D,B", "MOV D,C", "MOV D,D", "MOV D,E", "MOV D,H", "MOV D,L", "MOV D,M", "MOV D,A", // 0x50 - 0x57
@@ -65,14 +65,14 @@ static const char* OPCODE_NAME[256] = {
 	"XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A", // 0xA8 - 0xAF
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", // 0xB0 - 0xB7
 	"CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A", // 0xB8 - 0xBF
-	"RNZ", "POP B", "JNZ %#06x", "JMP %#06x", "CNZ %#06x", "PUSH B", "ADI d8", "RST 0", // 0xC0 - 0xC7
-	"RZ", "RET", "JZ %#06x", "NOP", "CZ %#06x", "CALL %#06x", "ACI d8", "RST 1", // 0xC8 - 0xCF
-	"RNC", "POP D", "JNC %#06x", "OUT d8", "CNC %#06x", "PUSH D", "SUI d8", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %#06x", "IN d8", "CC %#06x", "NOP", "SBI d8", "RST 3", // 0xD8 - 0xDF
-	"RPO", "POP H", "JPO %#06x", "XTHL", "CPO %#06x", "PUSH H", "ANI d8", "RST 4", // 0xE0 - 0xE7
-	"RPE", "PCHL", "JPE %#06x", "XCHG", "CPE %#06x", "NOP", "XRI d8", "RST 5", // 0xE8 - 0xEF
-	"RP", "POP PSW", "JP %#06x", "DI", "CP %#06x", "PUSH PSW", "ORI d8", "RST 6", // 0xF0 - 0xF7
-	"RM", "SPHL", "JM %#06x", "EI", "CM %#06x", "NOP", "CPI d8", "RST 7" // 0xF8 - 0xFF
+	"RNZ", "POP B", "JNZ %#06x", "JMP %#06x", "CNZ %#06x", "PUSH B", "ADI %#04x", "RST 0", // 0xC0 - 0xC7
+	"RZ", "RET", "JZ %#06x", "NOP", "CZ %#06x", "CALL %#06x", "ACI %#04x", "RST 1", // 0xC8 - 0xCF
+	"RNC", "POP D", "JNC %#06x", "OUT %#04x", "CNC %#06x", "PUSH D", "SUI %#04x", "RST 2", // 0xD0 - 0xD7
+	"RC", "NOP", "JC %#06x", "IN %#04x", "CC %#06x", "NOP", "SBI %#04x", "RST 3", // 0x%#04x - 0xDF
+	"RPO", "POP H", "JPO %#06x", "XTHL", "CPO %#06x", "PUSH H", "ANI %#04x", "RST 4", // 0xE0 - 0xE7
+	"RPE", "PCHL", "JPE %#06x", "XCHG", "CPE %#06x", "NOP", "XRI %#04x", "RST 5", // 0xE8 - 0xEF
+	"RP", "POP PSW", "JP %#06x", "DI", "CP %#06x", "PUSH PSW", "ORI %#04x", "RST 6", // 0xF0 - 0xF7
+	"RM", "SPHL", "JM %#06x", "EI", "CM %#06x", "NOP", "CPI %#04x", "RST 7" // 0xF8 - 0xFF
 };
 
 static WORD word_arg(const INTEL_8080* i8080) {
@@ -177,7 +177,9 @@ static inline void read_memory(
 static inline void bdos_syscall(INTEL_8080* i8080) {
 	switch (i8080->C) {
 	case 2: putchar(i8080->E); break; // C_WRITE
-	case 9: while (putchar(i8080->MEM[i8080->DE]) != '$'); break; // C_WRITESTR
+	case 9:
+		WORD index = i8080->DE;
+		while (putchar(i8080->MEM[index++]) != '$'); break; // C_WRITESTR
 	}
 }
 
@@ -198,13 +200,13 @@ static inline int emulate(
 			i8080->INT_PENDING = 0;
 			i8080->INT_VECTOR = 0;
 			i8080->HALT = 0;
-			instruction_print(i8080, i8080->INT_VECTOR);
+			//instruction_print(i8080, i8080->INT_VECTOR);
 			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
 		}
 		else if (!i8080->HALT) {
 			if (i8080->PC == 0x0005)
 				bdos_syscall(i8080);
-			instruction_print(i8080, i8080->MEM[i8080->PC]);
+			//instruction_print(i8080, i8080->MEM[i8080->PC]);
 			i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
 		}
 	}
