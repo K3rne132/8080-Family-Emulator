@@ -59,13 +59,13 @@ static void set_flags(
 }
 
 // writes word at memory address pointed by SP
-static void write_word_on_stack(INTEL_8080* i8080, WORD word) {
+void write_word_on_stack(INTEL_8080* i8080, WORD word) {
 	i8080->MEM[i8080->SP + 1] = word >> 8;
 	i8080->MEM[i8080->SP] = (BYTE)word;
 }
 
 // read word from memory address pointed by SP
-static WORD read_word_from_stack(INTEL_8080* i8080) {
+WORD read_word_from_stack(INTEL_8080* i8080) {
 	WORD result = i8080->MEM[i8080->SP + 1] << 8;
 	result |= i8080->MEM[i8080->SP];
 	return result;
@@ -77,7 +77,7 @@ BYTE cmc(INTEL_8080* i8080) {
 }
 
 BYTE stc(INTEL_8080* i8080) {
-	i8080->status.C = 1;
+	i8080->status.C = SET;
 	return 1;
 }
 
@@ -87,7 +87,7 @@ BYTE inr(INTEL_8080* i8080) {
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]++) : (i8080->MEM[i8080->HL]++);
 	carry++;
 	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0) ? 1 : 0;
+	i8080->status.AC = ((carry & 0xF) == 0) ? SET : RESET;
 	return 1;
 }
 
@@ -97,7 +97,7 @@ BYTE dcr(INTEL_8080* i8080) {
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]--) : (i8080->MEM[i8080->HL]--);
 	carry--;
 	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0xF) ? 1 : 0;
+	i8080->status.AC = ((carry & 0xF) == 0xF) ? SET : RESET;
 	return 1;
 }
 
@@ -258,6 +258,7 @@ BYTE rar(INTEL_8080* i8080) {
 }
 
 BYTE push(INTEL_8080* i8080) {
+	i8080->F = (i8080->F & 0xD7) | 0x2;
 	i8080->SP -= 2;
 	write_word_on_stack(i8080, i8080->REG_W[opcode_bits(i8080, 5, 4)]);
 	return 1;
@@ -537,12 +538,12 @@ BYTE rst(INTEL_8080* i8080) {
 }
 
 BYTE ei(INTEL_8080* i8080) {
-	i8080->INT = 1;
+	i8080->INT = SET;
 	return 1;
 }
 
 BYTE di(INTEL_8080* i8080) {
-	i8080->INT = 0;
+	i8080->INT = RESET;
 	return 1;
 }
 
@@ -557,6 +558,6 @@ BYTE out(INTEL_8080* i8080) {
 }
 
 BYTE hlt(INTEL_8080* i8080) {
-	i8080->HALT = 1;
+	i8080->HALT = SET;
 	return 1;
 }

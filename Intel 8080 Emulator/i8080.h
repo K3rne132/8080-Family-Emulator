@@ -1,6 +1,9 @@
 #pragma once
 #include <inttypes.h>
 
+#define SET 1
+#define RESET 0
+
 typedef uint8_t  BYTE;
 typedef uint16_t WORD;
 typedef uint8_t  BOOL;
@@ -111,13 +114,20 @@ typedef struct _INTEL_8080 {
 	BOOL HALT; // is CPU halted
 	BOOL INT; // has CPU enabled interrupts
 	BOOL INT_PENDING; // has CPU pending interrupt
-	BYTE INT_VECTOR; // data bus when external device interrupts
+	BYTE INT_VECTOR; // number of RST routine to execute
 
 	DWORD CYCLES;
 	DWORD INSTRUCTIONS;
 } INTEL_8080;
 
 #pragma pack(pop)
+
+// HELPERS
+
+void write_word_on_stack(INTEL_8080* i8080, WORD word);
+WORD read_word_from_stack(INTEL_8080* i8080);
+
+// INSTRUCTION SET
 
 typedef BYTE(*INSTRUCTION)(INTEL_8080* i8080);
 

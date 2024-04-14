@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "i8080.h"
 #include "memdump.h"
@@ -126,9 +127,10 @@ static inline BYTE port_read(
 
 static inline int interrupt(
 	INTEL_8080* i8080,
-	const BYTE vector
+	const BYTE vector // RST <vector>
 ) {
-	i8080->INT_PENDING = 1;
+	assert(vector >= 0 && vector <= 7);
+	i8080->INT_PENDING = SET;
 	i8080->INT_VECTOR = vector;
 	return i8080->INT;
 }
@@ -179,7 +181,9 @@ static inline void bdos_syscall(INTEL_8080* i8080) {
 	case 2: putchar(i8080->E); break; // C_WRITE
 	case 9: // C_WRITESTR
 		WORD index = i8080->DE;
-		while (putchar(i8080->MEM[index++]) != '$');
+		while (i8080->MEM[index] != '$') {
+			putchar(i8080->MEM[index++]);
+		}
 		break;
 	}
 }
@@ -193,19 +197,22 @@ static void instruction_print(
 }
 
 static inline int emulate(
-	INTEL_8080* i8080
+	INTEL_8080* i8080,
+	BOOL bdos
 ) {
 	while (1) {
 		if (i8080->INT && i8080->INT_PENDING) {
-			instruction_print(i8080, i8080->INT_VECTOR);
-			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
+			//instruction_print(i8080, i8080->INT_VECTOR);
+			i8080->SP -= 2;
+			write_word_on_stack(i8080, i8080->PC);
+			i8080->PC = i8080->INT_PENDING << 3;
 			i8080->INT = 0;
 			i8080->INT_PENDING = 0;
 			i8080->INT_VECTOR = 0;
 			i8080->HALT = 0;
 		}
 		else if (!i8080->HALT) {
-			if (i8080->PC == 0x0005)
+			if (i8080->PC == 0x0005 && bdos)
 				bdos_syscall(i8080);
 			//instruction_print(i8080, i8080->MEM[i8080->PC]);
 			i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
@@ -223,6 +230,6 @@ int main(int argc, char** argv) {
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
 	write_file_to_memory(&i8080, "8080EXM.COM", 0x0100);
-	emulate(&i8080);
+	emulate(&i8080, SET);
 	destroy(&i8080);
 }
