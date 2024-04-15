@@ -16,8 +16,8 @@ TEST_F(Intel8080FixtureTests, RegisterPairsEndiannessTest) {
 	ASSERT_EQ(CPU.H, 0x89);
 	ASSERT_EQ(CPU.L, 0xAB);
 
-	ASSERT_EQ(CPU.F, 0xCD);
-	ASSERT_EQ(CPU.A, 0xEF);
+	ASSERT_EQ(CPU.A, 0xCD);
+	ASSERT_EQ(CPU.F, 0xEF);
 }
 
 TEST_F(Intel8080FixtureTests, RegistersByteWordIndexingTest) {
@@ -98,10 +98,10 @@ TEST_F(Intel8080FixtureTests, INR_DCR_InstructionsTest) {
 	ASSERT_EQ(CPU.F, 0b01000110);
 	dcr(&CPU); // underflow
 	ASSERT_EQ(CPU.B, 0xFF);
-	ASSERT_EQ(CPU.F, 0b10010111);
+	ASSERT_EQ(CPU.F, 0b10010110); // carry not affected
 	inr(&CPU); // overflow
 	ASSERT_EQ(CPU.B, 0);
-	ASSERT_EQ(CPU.F, 0b01010111);
+	ASSERT_EQ(CPU.F, 0b01010110); // carry not affected
 
 	// init
 	CPU.MEM[CPU.PC] = 0b00111000; // 7 -> A (rest of bits does not matter here)
@@ -335,7 +335,9 @@ TEST_F(Intel8080FixtureTests, PUSH_POP_InstructionsTest) {
 	// check
 	ASSERT_EQ(push(&CPU), 1);
 	ASSERT_EQ(CPU.SP, 0x7FFE);
-	ASSERT_EQ(GetWORDFromMemory(CPU.SP), 0x0123);
+	ASSERT_EQ(GetWORDFromMemory(CPU.SP), CPU.BC);
+	ASSERT_EQ(CPU.MEM[CPU.SP], CPU.C);
+	ASSERT_EQ(CPU.MEM[CPU.SP + 1], CPU.B);
 
 	CPU.BC = 0;
 	ASSERT_EQ(pop(&CPU), 1);
@@ -347,14 +349,23 @@ TEST_F(Intel8080FixtureTests, PUSH_POP_InstructionsTest) {
 	CPU.MEM[CPU.PC] = 0b00010000; // DE
 
 	// check
-	ASSERT_EQ(push(&CPU), 1);
+	push(&CPU);
 	ASSERT_EQ(CPU.SP, 0x7FFF);
-	ASSERT_EQ(GetWORDFromMemory(CPU.SP), 0x4567);
+	ASSERT_EQ(GetWORDFromMemory(CPU.SP), CPU.DE);
+	ASSERT_EQ(CPU.MEM[CPU.SP], CPU.E);
+	ASSERT_EQ(CPU.MEM[CPU.SP + 1], CPU.D);
 
 	CPU.BC = 0;
-	ASSERT_EQ(pop(&CPU), 1);
+	pop(&CPU);
 	ASSERT_EQ(CPU.SP, 0x8001);
 	ASSERT_EQ(CPU.DE, 0x4567);
+
+	// check for PSW
+	CPU.MEM[CPU.PC] = 0b00110000; // PSW
+	push(&CPU);
+	ASSERT_EQ(GetWORDFromMemory(CPU.SP), CPU.PSW);
+	ASSERT_EQ(CPU.MEM[CPU.SP], CPU.F);
+	ASSERT_EQ(CPU.MEM[CPU.SP + 1], CPU.A);
 }
 
 TEST_F(Intel8080FixtureTests, DAD_InstructionsTest) {

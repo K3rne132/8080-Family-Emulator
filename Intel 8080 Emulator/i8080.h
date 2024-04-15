@@ -4,6 +4,8 @@
 #define SET 1
 #define RESET 0
 
+#define SWAPORDER(word) ((WORD)(word<<8)|(word>>8))
+
 typedef uint8_t  BYTE;
 typedef uint16_t WORD;
 typedef uint8_t  BOOL;
@@ -23,6 +25,7 @@ typedef enum _REG {
 
 // returns real index of register in little endian machine
 static inline int le_reg(BYTE id) {
+	if (id >= REG_M) return id;
 	return (id % 2 == 1) ? (id - 1) : (id + 1);
 }
 
@@ -100,11 +103,11 @@ typedef struct _INTEL_8080 {
 			union {
 				WORD PSW; // Program Status Word - A and F (6 and 7)
 				struct {
-					BYTE A; // Accumulator Register
 					union {
 						BYTE F; // Flags (Status) Register
 						STATUS status;
 					};
+					BYTE A; // Accumulator Register
 				};
 			};
 

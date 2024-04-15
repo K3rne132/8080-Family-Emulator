@@ -86,8 +86,8 @@ BYTE inr(INTEL_8080* i8080) {
 	DWORD carry = 0;
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]++) : (i8080->MEM[i8080->HL]++);
 	carry++;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0) ? SET : RESET;
+	set_flags(i8080, carry, 0, 1, 1, 1);
+	i8080->status.AC = ((carry & 0xF) == 0);
 	return 1;
 }
 
@@ -96,8 +96,8 @@ BYTE dcr(INTEL_8080* i8080) {
 	DWORD carry = 0;
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]--) : (i8080->MEM[i8080->HL]--);
 	carry--;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0xF) ? SET : RESET;
+	set_flags(i8080, carry, 0, 1, 1, 1);
+	i8080->status.AC = ((carry & 0xF) == 0xF);
 	return 1;
 }
 
@@ -107,13 +107,13 @@ BYTE cma(INTEL_8080* i8080) {
 }
 
 BYTE daa(INTEL_8080* i8080) {
-	BYTE la = i8080->A & 0x0F;
-	if (la > 9 || i8080->status.AC) {
+	BYTE lsb = i8080->A & 0x0F;
+	if (lsb > 9 || i8080->status.AC) {
 		i8080->A += 0b00000110;
 		i8080->status.AC = 1;
 	}
-	BYTE ma = (i8080->A & 0xF0) >> 4;
-	if (ma > 9 || i8080->status.C) {
+	BYTE msb = (i8080->A & 0xF0) >> 4;
+	if (msb > 9 || i8080->status.C) {
 		i8080->A += 0b01100000;
 		i8080->status.C = 1;
 	}
@@ -258,7 +258,7 @@ BYTE rar(INTEL_8080* i8080) {
 }
 
 BYTE push(INTEL_8080* i8080) {
-	i8080->F = (i8080->F & 0xD7) | 0x2;
+	i8080->F = (i8080->F & 0xD7) | 0x02;
 	i8080->SP -= 2;
 	write_word_on_stack(i8080, i8080->REG_W[opcode_bits(i8080, 5, 4)]);
 	return 1;
@@ -273,7 +273,7 @@ BYTE pop(INTEL_8080* i8080) {
 BYTE dad(INTEL_8080* i8080) {
 	DWORD carry = i8080->HL;
 	BYTE pair = opcode_bits(i8080, 5, 4);
-	(pair != REG_PAIR_SP) ? (carry += i8080->REG_W[pair]) : (carry += i8080->SP);
+	carry += (pair != REG_PAIR_SP) ? (i8080->REG_W[pair]) : (i8080->SP);
 	i8080->status.C = carry >> 16;
 	i8080->HL = carry;
 	return 1;

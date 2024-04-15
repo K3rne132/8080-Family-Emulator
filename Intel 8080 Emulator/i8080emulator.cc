@@ -192,9 +192,8 @@ static void instruction_print(
 	INTEL_8080* i8080,
 	BYTE instruction
 ) {
-	WORD be = word_arg(i8080);
 	printf("PC = %hXh    ", i8080->PC);
-	printf(OPCODE_NAME[instruction], ((be >> 8) | (be << 8)));
+	printf(OPCODE_NAME[instruction], SWAPORDER(word_arg(i8080)));
 	puts("");
 }
 
@@ -202,7 +201,7 @@ static void register_print(
 	INTEL_8080* i8080
 ) {
 	WORD be = word_arg(i8080);
-	printf("A=%hhX BC=%hX DE=%hX HL=%hX SP=%hX [S=%d Z=%d AC=%d P=%d C=%d]\n", i8080->A,
+	printf("A=%hhX BC=%hX DE=%hX HL=%hX SP=%hX [S=%d Z=%d AC=%d P=%d C=%d]  ", i8080->A,
 		i8080->BC, i8080->DE, i8080->HL, i8080->SP, i8080->status.S, i8080->status.Z,
 		i8080->status.AC, i8080->status.P, i8080->status.C);
 }
@@ -241,7 +240,7 @@ int main(int argc, char** argv) {
 	}
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
+	write_file_to_memory(&i8080, "CPUTEST.COM", 0x0100);
 	emulate(&i8080, SET);
 	destroy(&i8080);
 }
