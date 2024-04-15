@@ -97,7 +97,7 @@ BYTE dcr(INTEL_8080* i8080) {
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]--) : (i8080->MEM[i8080->HL]--);
 	carry--;
 	set_flags(i8080, carry, 0, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0xF);
+	i8080->status.AC = !((carry & 0xF) == 0xF);
 	return 1;
 }
 
@@ -109,12 +109,12 @@ BYTE cma(INTEL_8080* i8080) {
 BYTE daa(INTEL_8080* i8080) {
 	BYTE lsb = i8080->A & 0x0F;
 	if (lsb > 9 || i8080->status.AC) {
-		i8080->A += 0b00000110;
+		i8080->A += 0x06;
 		i8080->status.AC = 1;
 	}
 	BYTE msb = (i8080->A & 0xF0) >> 4;
 	if (msb > 9 || i8080->status.C) {
-		i8080->A += 0b01100000;
+		i8080->A += 0x60;
 		i8080->status.C = 1;
 	}
 	set_flags(i8080, i8080->A, 0, 1, 1, 1);

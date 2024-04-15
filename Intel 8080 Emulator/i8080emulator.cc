@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
 	}
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "CPUTEST.COM", 0x0100);
+	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
 	emulate(&i8080, SET);
 	destroy(&i8080);
 }
