@@ -95,10 +95,10 @@ TEST_F(Intel8080FixtureTests, INR_DCR_InstructionsTest) {
 	ASSERT_EQ(CPU.F, 0b00000010);
 	ASSERT_EQ(dcr(&CPU), 1);
 	ASSERT_EQ(CPU.B, 0);
-	ASSERT_EQ(CPU.F, 0b01000110);
+	ASSERT_EQ(CPU.F, 0b01010110);
 	dcr(&CPU); // underflow
 	ASSERT_EQ(CPU.B, 0xFF);
-	ASSERT_EQ(CPU.F, 0b10010110); // carry not affected
+	ASSERT_EQ(CPU.F, 0b10000110); // carry not affected
 	inr(&CPU); // overflow
 	ASSERT_EQ(CPU.B, 0);
 	ASSERT_EQ(CPU.F, 0b01010110); // carry not affected
@@ -239,25 +239,25 @@ TEST_F(Intel8080FixtureTests, SUB_SBB_CMP_InstructionsTest) {
 
 	// then check
 	ASSERT_EQ(cmp(&CPU), 1);
-	ASSERT_EQ(CPU.F, 0b10010010);
+	ASSERT_EQ(CPU.F, 0b10000010);
 	ASSERT_EQ(sub(&CPU), 1); // A - E = 0xDF
 	ASSERT_EQ(CPU.A, 0xDF);
-	ASSERT_EQ(CPU.F, 0b10010010);
+	ASSERT_EQ(CPU.F, 0b10000010);
 	ASSERT_EQ(sbb(&CPU), 1); // A - E - 0 = 0xC2
 	ASSERT_EQ(CPU.A, 0xC2);
-	ASSERT_EQ(CPU.F, 0b10000010);
+	ASSERT_EQ(CPU.F, 0b10010010);
 
 	// then check
 	CPU.MEM[CPU.PC] = REG_M; // rest of bits does not matter
 	cmp(&CPU);
-	ASSERT_EQ(CPU.F, 0b10000010);
+	ASSERT_EQ(CPU.F, 0b10010010);
 	sub(&CPU); // A - M = 0xB0
 	ASSERT_EQ(CPU.A, 0xB0);
-	ASSERT_EQ(CPU.F, 0b10000010);
+	ASSERT_EQ(CPU.F, 0b10010010);
 	CPU.status.C = 1;
 	sbb(&CPU); // A - M - 1 = 0x9D
 	ASSERT_EQ(CPU.A, 0x9D);
-	ASSERT_EQ(CPU.F, 0b10010010);
+	ASSERT_EQ(CPU.F, 0b10000010);
 }
 
 TEST_F(Intel8080FixtureTests, ANA_XRA_ORA_InstructionsTest) {
@@ -271,7 +271,7 @@ TEST_F(Intel8080FixtureTests, ANA_XRA_ORA_InstructionsTest) {
 	// then check
 	ASSERT_EQ(ana(&CPU), 1);
 	ASSERT_EQ(CPU.A, 0x4A);
-	ASSERT_EQ(CPU.F, 0b00000010);
+	ASSERT_EQ(CPU.F, 0b00010010);
 
 	CPU.MEM[CPU.PC] = REG_C;
 	ASSERT_EQ(xra(&CPU), 1);
@@ -464,19 +464,19 @@ TEST_F(Intel8080FixtureTests, SUI_SBI_CPI_InstructionsTest) {
 	// check when carry is set
 	ASSERT_EQ(cpi(&CPU), 2);
 	ASSERT_EQ(CPU.A, 0x00);
-	ASSERT_EQ(CPU.F, 0b00010011);
+	ASSERT_EQ(CPU.F, 0b00000011);
 	ASSERT_EQ(sui(&CPU), 2);
 	ASSERT_EQ(CPU.A, 0x2F);
-	ASSERT_EQ(CPU.F, 0b00010011);
+	ASSERT_EQ(CPU.F, 0b00000011);
 	ASSERT_EQ(sbi(&CPU), 2);
 	ASSERT_EQ(CPU.A, 0x5D);
-	ASSERT_EQ(CPU.F, 0b00000011);
+	ASSERT_EQ(CPU.F, 0b00010011);
 
 	// when carry is reset
 	CPU.status.C = 0;
 	sbi(&CPU);
 	ASSERT_EQ(CPU.A, 0x8C);
-	ASSERT_EQ(CPU.F, 0b10000011);
+	ASSERT_EQ(CPU.F, 0b10010011);
 }
 
 TEST_F(Intel8080FixtureTests, ANI_XRI_ORI_InstructionsTest) {
@@ -487,7 +487,7 @@ TEST_F(Intel8080FixtureTests, ANI_XRI_ORI_InstructionsTest) {
 	// then check
 	ASSERT_EQ(ani(&CPU), 2);
 	ASSERT_EQ(CPU.A, 0x25);
-	ASSERT_EQ(CPU.F, 0b00000010);
+	ASSERT_EQ(CPU.F, 0b00010010);
 
 	ASSERT_EQ(xri(&CPU), 2);
 	ASSERT_EQ(CPU.A, 0x42);

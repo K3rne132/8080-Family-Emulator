@@ -44,18 +44,27 @@ static BOOL parity_check(const BYTE val) {
 }
 
 // returns flag register based on extended arithmetic/logical operation result
-static void set_flags(
+static void set_ZSP_flags(
 	INTEL_8080* i8080,
-	const DWORD result_with_carry,
-	const BOOL c, // carry affected
-	const BOOL z, // zero affected
-	const BOOL s, // sign affected
-	const BOOL p // parity affected
+	const DWORD result
 ) {
-	if (c) i8080->status.C = result_with_carry >> 8;
-	if (z) i8080->status.Z = ((result_with_carry & 0xFF) == 0);
-	if (s) i8080->status.S = ((result_with_carry & 0xFF) >= 0x80);
-	if (p) i8080->status.P = parity_check(result_with_carry & 0xFF);
+	i8080->status.Z = ((result & 0xFF) == 0);
+	i8080->status.S = ((result & 0xFF) >= 0x80);
+	i8080->status.P = parity_check(result & 0xFF);
+}
+
+static BYTE alu_add(INTEL_8080* i8080, BYTE arg1, BYTE arg2, BYTE carry) {
+	DWORD result = arg1 + arg2 + carry;
+	set_ZSP_flags(i8080, result);
+	i8080->status.C = result >> 8;
+	i8080->status.AC = (((result ^ arg1 ^ arg2) & 0x10) != 0);
+	return result;
+}
+
+static BYTE alu_sub(INTEL_8080* i8080, BYTE arg1, BYTE arg2, BYTE carry) {
+	DWORD result = alu_add(i8080, arg1, ~arg2, 1 - carry);
+	i8080->status.C = 1 - i8080->status.C;
+	return result;
 }
 
 // writes word at memory address pointed by SP
@@ -86,8 +95,8 @@ BYTE inr(INTEL_8080* i8080) {
 	DWORD carry = 0;
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]++) : (i8080->MEM[i8080->HL]++);
 	carry++;
-	set_flags(i8080, carry, 0, 1, 1, 1);
-	i8080->status.AC = ((carry & 0xF) == 0);
+	set_ZSP_flags(i8080, carry);
+	i8080->status.AC = ((carry & 0x0F) == 0);
 	return 1;
 }
 
@@ -96,8 +105,8 @@ BYTE dcr(INTEL_8080* i8080) {
 	DWORD carry = 0;
 	carry = (reg != REG_M) ? (i8080->REG[le_reg(reg)]--) : (i8080->MEM[i8080->HL]--);
 	carry--;
-	set_flags(i8080, carry, 0, 1, 1, 1);
-	i8080->status.AC = !((carry & 0xF) == 0xF);
+	set_ZSP_flags(i8080, carry);
+	i8080->status.AC = !((carry & 0x0F) == 0x0F);
 	return 1;
 }
 
@@ -107,17 +116,18 @@ BYTE cma(INTEL_8080* i8080) {
 }
 
 BYTE daa(INTEL_8080* i8080) {
+	BYTE old_c = i8080->status.C;
+	BYTE to_add = 0;
 	BYTE lsb = i8080->A & 0x0F;
-	if (lsb > 9 || i8080->status.AC) {
-		i8080->A += 0x06;
-		i8080->status.AC = 1;
-	}
 	BYTE msb = (i8080->A & 0xF0) >> 4;
-	if (msb > 9 || i8080->status.C) {
-		i8080->A += 0x60;
-		i8080->status.C = 1;
+	if (lsb > 9 || i8080->status.AC)
+		to_add += 0x06;
+	if (msb > 9 || i8080->status.C || (msb >= 9 && lsb > 9)) {
+		to_add += 0x60;
+		old_c = 1;
 	}
-	set_flags(i8080, i8080->A, 0, 1, 1, 1);
+	i8080->A = alu_add(i8080, i8080->A, to_add, 0);
+	i8080->status.C = old_c;
 	return 1;
 }
 
@@ -153,77 +163,65 @@ BYTE ldax(INTEL_8080* i8080) {
 }
 
 BYTE add(INTEL_8080* i8080) {
-	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	carry += num;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) + (num & 0xF)) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_add(i8080, i8080->A, num, 0);
 	return 1;
 }
 
 BYTE adc(INTEL_8080* i8080) {
-	DWORD carry = i8080->A + i8080->status.C;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	carry += num;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) + (num & 0xF) + i8080->status.C) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_add(i8080, i8080->A, num, i8080->status.C);
 	return 1;
 }
 
 BYTE sub(INTEL_8080* i8080) {
-	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	carry -= num;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF)) > 0x0F);
-	i8080->A = carry;
+	i8080->A = alu_sub(i8080, i8080->A, num, 0);
 	return 1;
 }
 
 BYTE sbb(INTEL_8080* i8080) {
-	DWORD carry = i8080->A - i8080->status.C;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	carry -= num;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF) + i8080->status.C) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_sub(i8080, i8080->A, num, i8080->status.C);
 	return 1;
 }
 
 BYTE ana(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
-	i8080->A &= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	BYTE num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
+	i8080->status.C = RESET;
+	i8080->status.AC = (((i8080->A | num) & 0x08) != 0);
+	i8080->A &= num;
+	set_ZSP_flags(i8080, i8080->A);
 	return 1;
 }
 
 BYTE xra(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	i8080->A ^= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	set_ZSP_flags(i8080, i8080->A);
+	i8080->status.C = RESET;
+	i8080->status.AC = RESET;
 	return 1;
 }
 
 BYTE ora(INTEL_8080* i8080) {
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	i8080->A |= (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	set_ZSP_flags(i8080, i8080->A);
+	i8080->status.C = RESET;
+	i8080->status.AC = RESET;
 	return 1;
 }
 
 BYTE cmp(INTEL_8080* i8080) {
-	DWORD carry = i8080->A;
 	BYTE reg = opcode_bits(i8080, 2, 0);
 	DWORD num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
-	carry -= num;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (num & 0xF)) > 0xF);
+	alu_sub(i8080, i8080->A, num, 0);
 	return 1;
 }
 
@@ -328,64 +326,51 @@ BYTE mvi(INTEL_8080* i8080) {
 }
 
 BYTE adi(INTEL_8080* i8080) {
-	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A + arg;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) + (arg & 0xF)) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_add(i8080, i8080->A, byte_arg(i8080), 0);
 	return 2;
 }
 
 BYTE aci(INTEL_8080* i8080) {
-	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A + arg + i8080->status.C;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) + (arg & 0xF) + i8080->status.C) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_add(i8080, i8080->A, byte_arg(i8080), i8080->status.C);
 	return 2;
 }
 
 BYTE sui(INTEL_8080* i8080) {
-	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A - arg;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (arg & 0xF)) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_sub(i8080, i8080->A, byte_arg(i8080), 0);
 	return 2;
 }
 
 BYTE sbi(INTEL_8080* i8080) {
-	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A - arg - i8080->status.C;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (arg & 0xF) + i8080->status.C) > 0xF);
-	i8080->A = carry;
+	i8080->A = alu_sub(i8080, i8080->A, byte_arg(i8080), i8080->status.C);
 	return 2;
 }
 
 BYTE ani(INTEL_8080* i8080) {
+	i8080->status.C = RESET;
+	i8080->status.AC = (((i8080->A | byte_arg(i8080)) & 0x08) != 0);
 	i8080->A &= byte_arg(i8080);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	set_ZSP_flags(i8080, i8080->A);
 	return 2;
 }
 
 BYTE xri(INTEL_8080* i8080) {
 	i8080->A ^= byte_arg(i8080);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	set_ZSP_flags(i8080, i8080->A);
+	i8080->status.C = RESET;
+	i8080->status.AC = RESET;
 	return 2;
 }
 
 BYTE ori(INTEL_8080* i8080) {
 	i8080->A |= byte_arg(i8080);
-	set_flags(i8080, i8080->A, 1, 1, 1, 1);
+	set_ZSP_flags(i8080, i8080->A);
+	i8080->status.C = RESET;
+	i8080->status.AC = RESET;
 	return 2;
 }
 
 BYTE cpi(INTEL_8080* i8080) {
-	DWORD arg = byte_arg(i8080);
-	DWORD carry = i8080->A - arg;
-	set_flags(i8080, carry, 1, 1, 1, 1);
-	i8080->status.AC = (((i8080->A & 0x0F) - (arg & 0xF)) > 0xF);
+	alu_sub(i8080, i8080->A, byte_arg(i8080), 0);
 	return 2;
 }
 
