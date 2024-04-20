@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include <locale.h>
 
 #include "i8080.h"
@@ -109,14 +110,14 @@ static const uint8_t OPCODE_LENGTH[256] = {
 
 
 static const char* OPCODE_NAME[256] = {
-	"NOP", "LXI B,%#06x", "STAX B", "INX B", "INR B", "DCR B", "MVI B,d8", "RLC", // 0x00 - 0x07
-	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,d8", "RRC", // 0x08 - 0x0F
-	"NOP", "LXI D,%#06x", "STAX D", "INX D", "INR D", "DCR D", "MVI D,d8", "RAL", // 0x10 - 0x17
-	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,d8", "RAR", // 0x18 - 0x1F
-	"NOP", "LXI H,%#06x", "SHLD %#06x", "INX H", "INR H", "DCR H", "MVI H,d8", "DAA", // 0x20 - 0x27
-	"NOP", "DAD H", "LHLD %#06x", "DCX H", "INR L", "DCR L", "MVI L,d8", "CMA", // 0x28 - 0x2F
-	"NOP", "LXI SP,%#06x", "STA %#06x", "INX SP", "INR M", "DCR M", "MVI M,d8", "STC", // 0x30 - 0x37
-	"NOP", "DAD SP", "LDA %#06x", "DCX SP", "INR A", "DCR A", "MVI A,d8", "CMC", // 0x38 - 0x3F
+	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
+	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
+	"NOP", "LXI D,%hXh", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%hhXh", "RAL", // 0x10 - 0x17
+	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%hhXh", "RAR", // 0x18 - 0x1F
+	"NOP", "LXI H,%hXh", "SHLD %hXh", "INX H", "INR H", "DCR H", "MVI H,%hhXh", "DAA", // 0x20 - 0x27
+	"NOP", "DAD H", "LHLD %hXh", "DCX H", "INR L", "DCR L", "MVI L,%hhXh", "CMA", // 0x28 - 0x2F
+	"NOP", "LXI SP,%hXh", "STA %hXh", "INX SP", "INR M", "DCR M", "MVI M,%hhXh", "STC", // 0x30 - 0x37
+	"NOP", "DAD SP", "LDA %hXh", "DCX SP", "INR A", "DCR A", "MVI A,%hhXh", "CMC", // 0x38 - 0x3F
 	"MOV B,B", "MOV B,C", "MOV B,D", "MOV B,E", "MOV B,H", "MOV B,L", "MOV B,M", "MOV B,A", // 0x40 - 0x47
 	"MOV C,B", "MOV C,C", "MOV C,D", "MOV C,E", "MOV C,H", "MOV C,L", "MOV C,M", "MOV C,A", // 0x48 - 0x4F
 	"MOV D,B", "MOV D,C", "MOV D,D", "MOV D,E", "MOV D,H", "MOV D,L", "MOV D,M", "MOV D,A", // 0x50 - 0x57
@@ -133,14 +134,14 @@ static const char* OPCODE_NAME[256] = {
 	"XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A", // 0xA8 - 0xAF
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", // 0xB0 - 0xB7
 	"CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A", // 0xB8 - 0xBF
-	"RNZ", "POP B", "JNZ %#06x", "JMP %#06x", "CNZ %#06x", "PUSH B", "ADI d8", "RST 0", // 0xC0 - 0xC7
-	"RZ", "RET", "JZ %#06x", "NOP", "CZ %#06x", "CALL %#06x", "ACI d8", "RST 1", // 0xC8 - 0xCF
-	"RNC", "POP D", "JNC %#06x", "OUT d8", "CNC %#06x", "PUSH D", "SUI d8", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %#06x", "IN d8", "CC %#06x", "NOP", "SBI d8", "RST 3", // 0xD8 - 0xDF
-	"RPO", "POP H", "JPO %#06x", "XTHL", "CPO %#06x", "PUSH H", "ANI d8", "RST 4", // 0xE0 - 0xE7
-	"RPE", "PCHL", "JPE %#06x", "XCHG", "CPE %#06x", "NOP", "XRI d8", "RST 5", // 0xE8 - 0xEF
-	"RP", "POP PSW", "JP %#06x", "DI", "CP %#06x", "PUSH PSW", "ORI d8", "RST 6", // 0xF0 - 0xF7
-	"RM", "SPHL", "JM %#06x", "EI", "CM %#06x", "NOP", "CPI d8", "RST 7" // 0xF8 - 0xFF
+	"RNZ", "POP B", "JNZ %hXh", "JMP %hXh", "CNZ %hXh", "PUSH B", "ADI %hhXh", "RST 0", // 0xC0 - 0xC7
+	"RZ", "RET", "JZ %hXh", "NOP", "CZ %hXh", "CALL %hXh", "ACI %hhXh", "RST 1", // 0xC8 - 0xCF
+	"RNC", "POP D", "JNC %hXh", "OUT %hhXh", "CNC %hXh", "PUSH D", "SUI %hhXh", "RST 2", // 0xD0 - 0xD7
+	"RC", "NOP", "JC %hXh", "IN %hhXh", "CC %hXh", "NOP", "SBI %hhXh", "RST 3", // 0xD8 - 0xDF
+	"RPO", "POP H", "JPO %hXh", "XTHL", "CPO %hXh", "PUSH H", "ANI %hhXh", "RST 4", // 0xE0 - 0xE7
+	"RPE", "PCHL", "JPE %hXh", "XCHG", "CPE %hXh", "NOP", "XRI %hhXh", "RST 5", // 0xE8 - 0xEF
+	"RP", "POP PSW", "JP %hXh", "DI", "CP %hXh", "PUSH PSW", "ORI %hhXh", "RST 6", // 0xF0 - 0xF7
+	"RM", "SPHL", "JM %hXh", "EI", "CM %hXh", "NOP", "CPI %hhXh", "RST 7" // 0xF8 - 0xFF
 };
 
 
@@ -195,9 +196,10 @@ static inline BYTE port_read(
 
 static inline int interrupt(
 	INTEL_8080* i8080,
-	const BYTE vector
+	const BYTE vector // RST <vector>
 ) {
-	i8080->INT_PENDING = 1;
+	assert(vector >= 0 && vector <= 7);
+	i8080->INT_PENDING = SET;
 	i8080->INT_VECTOR = vector;
 	return i8080->INT;
 }
@@ -225,8 +227,8 @@ static inline int write_file_to_memory(
 	long size = ftell(file);
 	if (size + address > 0xFFFF) {
 		fclose(file);
-		fprintf(stderr, "Filename %s with size %#06x bytes is too large to "
-			"be loaded at address %#06x\n", filename, size, address);
+		fprintf(stderr, "Filename %s with size %hXh bytes is too large to "
+			"be loaded at address %hXh\n", filename, size, address);
 		return 1;
 	}
 	fseek(file, 0, SEEK_SET);
@@ -429,18 +431,39 @@ static inline void bdos_syscall(INTEL_8080* i8080) {
 				break;
 			}
 		}
-
-		break; // C_WRITESTR
+		break;
 	}
+}
+static void instruction_print(
+	INTEL_8080* i8080,
+	BYTE instruction
+) {
+	printf("PC = %hXh    ", i8080->PC);
+	printf(OPCODE_NAME[instruction], SWAPORDER(word_arg(i8080)));
+	puts("");
+}
+
+static void register_print(
+	INTEL_8080* i8080
+) {
+	WORD be = word_arg(i8080);
+	printf("A=%hhX BC=%hX DE=%hX HL=%hX SP=%hX [S=%d Z=%d AC=%d P=%d C=%d]  ", i8080->A,
+		i8080->BC, i8080->DE, i8080->HL, i8080->SP, i8080->status.S, i8080->status.Z,
+		i8080->status.AC, i8080->status.P, i8080->status.C);
 }
 
 static inline int emulate(
-	INTEL_8080* i8080
+	INTEL_8080* i8080,
+	BOOL bdos
 ) {
 	while (1) {
 		std::cerr << "\033[H";
 		prepare_screen(i8080);
 		if (i8080->INT && i8080->INT_PENDING) {
+			//instruction_print(i8080, i8080->INT_VECTOR);
+			i8080->SP -= 2;
+			write_word_on_stack(i8080, i8080->PC);
+			i8080->PC = i8080->INT_PENDING << 3;
 			i8080->INT = 0;
 			i8080->INT_PENDING = 0;
 			i8080->INT_VECTOR = 0;
@@ -451,7 +474,7 @@ static inline int emulate(
 			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
 		}
 		else if (!i8080->HALT) {
-			if (i8080->PC == 0x0005)
+			if (i8080->PC == 0x0005 && bdos)
 				bdos_syscall(i8080);
 			instruction_history.push(i8080->PC);
 			if (instruction_history.size() > MAX_HISTORY_SIZE)
@@ -508,7 +531,7 @@ int main(int argc, char** argv) {
 	read_memory(&i8080, 0x0100, 128);
 	read_screen_format(&i8080, screen_format);
 	
-	emulate(&i8080);
+	emulate(&i8080, SET);
 	destroy_screen();
 	destroy(&i8080);
 }

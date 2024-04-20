@@ -1,6 +1,11 @@
 #pragma once
 #include <inttypes.h>
 
+#define SET 1
+#define RESET 0
+
+#define SWAPORDER(word) ((WORD)(word<<8)|(word>>8))
+
 typedef uint8_t  BYTE;
 typedef uint16_t WORD;
 typedef uint8_t  BOOL;
@@ -17,6 +22,12 @@ typedef enum _REG {
 	REG_M,	   // 110b for memory ref. M
 	REG_A	   // 111b for register A
 } REG_ID;
+
+// returns real index of register in little endian machine
+static inline int le_reg(BYTE id) {
+	if (id >= REG_M) return id;
+	return (id % 2 == 1) ? (id - 1) : (id + 1);
+}
 
 // REGISTER PAIR INSTRUCTIONS
 typedef enum _REG_PAIR {
@@ -68,24 +79,24 @@ typedef struct _INTEL_8080 {
 			union {
 				WORD BC; // B and C (0 and 1)
 				struct {
-					BYTE B;
 					BYTE C;
+					BYTE B;
 				};
 			};
 
 			union {
 				WORD DE; // D and E (2 and 3)
 				struct {
-					BYTE D;
 					BYTE E;
+					BYTE D;
 				};
 			};
 
 			union {
 				WORD HL; // H and L (4 and 5)
 				struct {
-					uint8_t H; // most significant 8 bits of the address
 					uint8_t L; // least significant 8 bits of the address
+					uint8_t H; // most significant 8 bits of the address
 				};
 			};
 
@@ -106,7 +117,7 @@ typedef struct _INTEL_8080 {
 	BOOL HALT; // is CPU halted
 	BOOL INT; // has CPU enabled interrupts
 	BOOL INT_PENDING; // has CPU pending interrupt
-	BYTE INT_VECTOR; // data bus when external device interrupts
+	BYTE INT_VECTOR; // number of RST routine to execute
 
 	DWORD CYCLES;
 	DWORD INSTRUCTIONS;
@@ -114,18 +125,29 @@ typedef struct _INTEL_8080 {
 
 #pragma pack(pop)
 
+// HELPERS
+
+void write_word_on_stack(INTEL_8080* i8080, WORD word);
+WORD read_word_from_stack(INTEL_8080* i8080);
+
+// INSTRUCTION SET
+
 typedef BYTE(*INSTRUCTION)(INTEL_8080* i8080);
 
 BYTE cmc(INTEL_8080* i8080);
 BYTE stc(INTEL_8080* i8080);
+
 BYTE inr(INTEL_8080* i8080);
 BYTE dcr(INTEL_8080* i8080);
 BYTE cma(INTEL_8080* i8080);
 BYTE daa(INTEL_8080* i8080);
+
+BYTE nop(INTEL_8080* i8080);
+
+BYTE mov(INTEL_8080* i8080);
 BYTE stax(INTEL_8080* i8080);
 BYTE ldax(INTEL_8080* i8080);
-BYTE nop(INTEL_8080* i8080);
-BYTE mov(INTEL_8080* i8080);
+
 BYTE add(INTEL_8080* i8080);
 BYTE adc(INTEL_8080* i8080);
 BYTE sub(INTEL_8080* i8080);
@@ -134,10 +156,12 @@ BYTE ana(INTEL_8080* i8080);
 BYTE xra(INTEL_8080* i8080);
 BYTE ora(INTEL_8080* i8080);
 BYTE cmp(INTEL_8080* i8080);
+
 BYTE rlc(INTEL_8080* i8080);
 BYTE rrc(INTEL_8080* i8080);
 BYTE ral(INTEL_8080* i8080);
 BYTE rar(INTEL_8080* i8080);
+
 BYTE push(INTEL_8080* i8080);
 BYTE pop(INTEL_8080* i8080);
 BYTE dad(INTEL_8080* i8080);
@@ -146,6 +170,7 @@ BYTE dcx(INTEL_8080* i8080);
 BYTE xchg(INTEL_8080* i8080);
 BYTE xthl(INTEL_8080* i8080);
 BYTE sphl(INTEL_8080* i8080);
+
 BYTE lxi(INTEL_8080* i8080);
 BYTE mvi(INTEL_8080* i8080);
 BYTE adi(INTEL_8080* i8080);
@@ -156,10 +181,12 @@ BYTE ani(INTEL_8080* i8080);
 BYTE xri(INTEL_8080* i8080);
 BYTE ori(INTEL_8080* i8080);
 BYTE cpi(INTEL_8080* i8080);
+
 BYTE sta(INTEL_8080* i8080);
 BYTE lda(INTEL_8080* i8080);
 BYTE shld(INTEL_8080* i8080);
 BYTE lhld(INTEL_8080* i8080);
+
 BYTE pchl(INTEL_8080* i8080);
 BYTE jmp(INTEL_8080* i8080);
 BYTE jc(INTEL_8080* i8080);
@@ -170,6 +197,7 @@ BYTE jm(INTEL_8080* i8080);
 BYTE jp(INTEL_8080* i8080);
 BYTE jpe(INTEL_8080* i8080);
 BYTE jpo(INTEL_8080* i8080);
+
 BYTE call(INTEL_8080* i8080);
 BYTE cc(INTEL_8080* i8080);
 BYTE cnc(INTEL_8080* i8080);
@@ -179,6 +207,7 @@ BYTE cm(INTEL_8080* i8080);
 BYTE cp(INTEL_8080* i8080);
 BYTE cpe(INTEL_8080* i8080);
 BYTE cpo(INTEL_8080* i8080);
+
 BYTE ret(INTEL_8080* i8080);
 BYTE rc(INTEL_8080* i8080);
 BYTE rnc(INTEL_8080* i8080);
@@ -188,6 +217,7 @@ BYTE rm(INTEL_8080* i8080);
 BYTE rp(INTEL_8080* i8080);
 BYTE rpe(INTEL_8080* i8080);
 BYTE rpo(INTEL_8080* i8080);
+
 BYTE rst(INTEL_8080* i8080);
 BYTE ei(INTEL_8080* i8080);
 BYTE di(INTEL_8080* i8080);

@@ -5,7 +5,7 @@
 class Intel8080FixtureTests : public testing::Test {
 protected:
     INTEL_8080 CPU;
-
+    
     void InitializePairs() {
         CPU.BC = 0x0123;
         CPU.DE = 0x4567;
@@ -13,9 +13,9 @@ protected:
         CPU.PSW = 0xCDEF;
     }
 
-    void SetWORDInMemory(BYTE h_byte, BYTE l_byte, WORD address) {
-        CPU.MEM[address] = h_byte;
-        CPU.MEM[address + 1] = l_byte;
+    void SetWORDInMemory(WORD word, WORD address) {
+        CPU.MEM[address] = (BYTE)word;
+        CPU.MEM[address + 1] = word >> 8;
     }
 
     // return WORD in big endian order
