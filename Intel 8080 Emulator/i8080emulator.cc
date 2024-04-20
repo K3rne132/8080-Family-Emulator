@@ -5,10 +5,8 @@
 
 #include "i8080.h"
 #include "memdump.h"
-#include <iostream>
-#include <string>
-#include <queue>
-#include <cstdarg>
+#include <string.h>
+#include <stdarg.h>
 
 
 static const char* SCREEN_FORMAT_FILE = "intel8080.cpf";
@@ -31,7 +29,8 @@ static const unsigned int TEMPLATE_MAX_WIDTH[] = { MAX_PROGRAM_WIDTH, MAX_PROGRA
 static const unsigned int NUMBERS_MAX_WIDTH[] = { 1, 1, 2, 4 };
 
 static const unsigned int MAX_HISTORY_SIZE = 8;
-std::queue<uint16_t> instruction_history;
+uint16_t instruction_history[MAX_HISTORY_SIZE + 1];
+int queue_index = 0;
 int standard_index = 0;
 uint16_t memory_offset = 0;
 
@@ -321,21 +320,15 @@ static void replace_memory(INTEL_8080* i8080, char* line, const char* pattern, c
 }
 
 static void prepare_screen(INTEL_8080* i8080) {
+	printf("\033[H");
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; ++i) {
 		memcpy(screen_text[i], screen_format[i], sizeof(char) * MAX_FORMAT_WIDTH);
 	}
 
-	std::queue<uint16_t> q;
-	int qsize = instruction_history.size();
-
-	memset(prev_address, 0, (MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
-	while (qsize--) {
-		q.push(instruction_history.front());
-		prev_address[qsize + 1] = instruction_history.front();
-		instruction_history.pop();
+	for (int i = 0; i < MAX_HISTORY_SIZE; i++) {
+		//fprintf(stderr, "%d %d %d          \n", i, queue_index - i, (queue_index - i) % MAX_HISTORY_SIZE);
+		prev_address[i] = instruction_history[(queue_index - i) % MAX_HISTORY_SIZE];
 	}
-	instruction_history = q;
-	
 
 	memset(next_address, 0, (MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
 	uint16_t fake_pc = i8080->PC;
@@ -399,11 +392,11 @@ static void prepare_screen(INTEL_8080* i8080) {
 		}
 	}
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; ++i) {
-		std::cerr << screen_text[i];
+		printf(screen_text[i]);
 	}
 }
 static inline void bdos_syscall(INTEL_8080* i8080) {
-	if (standard_index > standard_index * (MAX_STDOUT_WIDTH - 1) * (MAX_FORMAT_HEIGHT - 1)) {
+	if (standard_index / MAX_STDOUT_WIDTH >= MAX_STDOUT_HEIGHT) {
 		for (int i = 0; i < MAX_STDOUT_HEIGHT; ++i) {
 			if (standard_output[i] != NULL) {
 				memset(standard_output[i], ' ', MAX_STDOUT_WIDTH);
@@ -463,7 +456,7 @@ static inline int emulate(
 	BOOL bdos
 ) {
 	while (1) {
-		std::cerr << "\033[H";
+		//fprintf(stderr, "%d    \n", queue_index);
 		//prepare_screen(i8080);
 		if (i8080->INT && i8080->INT_PENDING) {
 			//instruction_print(i8080, i8080->INT_VECTOR);
@@ -474,17 +467,15 @@ static inline int emulate(
 			i8080->INT_PENDING = 0;
 			i8080->INT_VECTOR = 0;
 			i8080->HALT = 0;
-			instruction_history.push(i8080->INT_VECTOR);
-			if (instruction_history.size() > MAX_HISTORY_SIZE)
-				instruction_history.pop();
+			instruction_history[queue_index] = i8080->INT_VECTOR;
+			queue_index = (queue_index++ % MAX_HISTORY_SIZE);
 			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
 		}
 		else if (!i8080->HALT) {
 			if (i8080->PC == 0x0005 && bdos)
 				bdos_syscall(i8080);
-			instruction_history.push(i8080->PC);
-			if (instruction_history.size() > MAX_HISTORY_SIZE)
-				instruction_history.pop();
+			instruction_history[queue_index] = i8080->PC;
+			queue_index = (queue_index++ % MAX_HISTORY_SIZE);
 			i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
 		}
 	}
@@ -512,8 +503,8 @@ static void init_screen() {
 			}
 		}
 	}
-	prev_address = (uint16_t*)malloc((MAX_STDOUT_HEIGHT + 1) * sizeof(uint16_t));
-	next_address = (uint16_t*)malloc((MAX_STDOUT_HEIGHT + 1) * sizeof(uint16_t));
+	prev_address = (uint16_t*)malloc((MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
+	next_address = (uint16_t*)malloc((MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
 }
 
 static void destroy_screen() {
