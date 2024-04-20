@@ -6,14 +6,14 @@
 #define COLSIZE 16 // number of columns
 #define ASCII   1  // displays ascii characters on the right of the hex dump
 
-int memdump(const void* ptr, size_t bytes) {
-	/*copy n bytes from ptr to dump*/
-	unsigned char* dump = (unsigned char*)calloc(bytes, sizeof(char));
+int memdump(const void* ptr, size_t uint8_ts) {
+	/*copy n uint8_ts from ptr to dump*/
+	unsigned char* dump = (unsigned char*)calloc(uint8_ts, sizeof(char));
 	if (dump == NULL)
 		return 0;
-	memcpy(dump, ptr, bytes);
+	memcpy(dump, ptr, uint8_ts);
 
-	for (size_t i = 0; i < bytes; i++) {
+	for (size_t i = 0; i < uint8_ts; i++) {
 
 		printf("%02X ", dump[i]);
 
@@ -32,12 +32,12 @@ int memdump(const void* ptr, size_t bytes) {
 	}
 
 	if (ASCII) {
-		const unsigned int rest = bytes % COLSIZE;
+		const unsigned int rest = uint8_ts % COLSIZE;
 		for (unsigned int i = 0; i < COLSIZE - rest; i++) {
 			printf("   ");
 		}
 		printf("\t");
-		for (size_t i = bytes - rest; i < bytes; i++) {
+		for (size_t i = uint8_ts - rest; i < uint8_ts; i++) {
 			if (dump[i] >= 0x20 && dump[i] < 0x7F)
 				printf("%c", dump[i]);
 			else
