@@ -403,36 +403,42 @@ static void prepare_screen(INTEL_8080* i8080) {
 	}
 }
 static inline void bdos_syscall(INTEL_8080* i8080) {
+	if (standard_index > standard_index * (MAX_STDOUT_WIDTH - 1) * (MAX_FORMAT_HEIGHT - 1)) {
+		for (int i = 0; i < MAX_STDOUT_HEIGHT; ++i) {
+			if (standard_output[i] != NULL) {
+				memset(standard_output[i], ' ', MAX_STDOUT_WIDTH);
+			}
+		}
+		standard_index = 0;
+	}
+
 	switch (i8080->C) {
 	case 2:  // C_WRITE
-
-		if (i8080->E == '\r') {
-			break;
-		}
-		else if (i8080->E == '\n') {
+		if (i8080->E == '\n') {
 			standard_index = ((standard_index / MAX_STDOUT_WIDTH) + 1) * MAX_STDOUT_WIDTH;
-			break;
 		}
-		else
+		else if (i8080->E != '\r')
 		{
 			standard_output[standard_index / MAX_STDOUT_WIDTH][standard_index % MAX_STDOUT_WIDTH] = i8080->E;
 			standard_index++;
-			break;
 		}
+		break;
 	case 9:
-		while (i8080->MEM[i8080->DE] != '$') {
-			if (i8080->MEM[i8080->DE] == '\n') {
+		WORD index = i8080->DE;
+		while (i8080->MEM[index] != '$') {
+			if (i8080->MEM[index] == '\n') {
 				standard_index = ((standard_index / MAX_STDOUT_WIDTH) + 1) * MAX_STDOUT_WIDTH;
 			}
-			else if (i8080->MEM[i8080->DE] != '\r')
+			else if (i8080->MEM[index] != '\r')
 			{
-				standard_output[standard_index / MAX_STDOUT_WIDTH][standard_index % MAX_STDOUT_WIDTH] = i8080->MEM[i8080->DE];
+				standard_output[standard_index / MAX_STDOUT_WIDTH][standard_index % MAX_STDOUT_WIDTH] = i8080->MEM[index];
 				standard_index++;
-				break;
 			}
+			index++;
 		}
 		break;
 	}
+	prepare_screen(i8080);
 }
 static void instruction_print(
 	INTEL_8080* i8080,
@@ -458,7 +464,7 @@ static inline int emulate(
 ) {
 	while (1) {
 		std::cerr << "\033[H";
-		prepare_screen(i8080);
+		//prepare_screen(i8080);
 		if (i8080->INT && i8080->INT_PENDING) {
 			//instruction_print(i8080, i8080->INT_VECTOR);
 			i8080->SP -= 2;
@@ -527,7 +533,7 @@ int main(int argc, char** argv) {
 	}
 	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "TEST.COM", 0x0100);
+	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
 	read_memory(&i8080, 0x0100, 128);
 	read_screen_format(&i8080, screen_format);
 	
