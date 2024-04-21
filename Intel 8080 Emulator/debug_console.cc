@@ -1,9 +1,12 @@
-#include "interface.h"
+#include "debug_console.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <locale.h>
 #include <string.h>
+#include "system.h"
+
+#define MAKEWORD(a,b) ((a)|(b<<8))
 
 static const char* OPCODE_NAME[256] = {
 	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
@@ -58,6 +61,7 @@ static const uint8_t OPCODE_LENGTH[256] = {
 	1, 1, 3, 1, 3, 1, 2, 0, 1, 0, 3, 1, 3, 1, 2, 0, // 0xE0 - 0xEF
 	1, 1, 3, 1, 3, 1, 2, 0, 1, 1, 3, 1, 3, 1, 2, 0  // 0xF0 - 0xFF
 };
+
 // read screen format file from disk
 int read_screen_format(
 	SCREEN* screen,
@@ -75,6 +79,7 @@ int read_screen_format(
 	fclose(file);
 	return 0;
 }
+
 // replaces known pattern with given data
 int replace_pattern(
 	char* line,
@@ -100,6 +105,7 @@ int replace_pattern(
 	free(replace);
 	return 0;
 }
+
 // replaces memory box with program with actual data from procesor memory
 int replace_program(
 	INTEL_8080* i8080,
@@ -112,12 +118,14 @@ int replace_program(
 	char* text = (char*)malloc(len);
 	if (text == NULL)
 		return -1;
-	snprintf(text, len, OPCODE_NAME[i8080->MEM[address[num]]], i8080->MEM[address[num] + 1]);
+	snprintf(text, len, OPCODE_NAME[i8080->MEM[address[num]]],
+		MAKEWORD(i8080->MEM[address[num] + 1], i8080->MEM[address[num] + 2]));
 	int result = replace_pattern(line, pattern,
-		(address[num] != 0) ? ("0x%04x %-15s") : (FORMAT_SKIP), address[num], text);
+		(address[num] != 0) ? ("0x%04X %-15s") : (FORMAT_SKIP), address[num], text);
 	free(text);
 	return result;
 }
+
 // replaces memory box in screen template with actual data from procesor memory
 int replace_memory(
 	INTEL_8080* i8080,
@@ -130,11 +138,11 @@ int replace_memory(
 	if (text == NULL)
 		return -1;
 	const uint16_t offset = memory_offset + num * 8;
-	snprintf(text, strlen(text), "%02x %02x %02x %02x %02x %02x %02x %02x ",
+	snprintf(text, strlen(text), "%02X %02X %02X %02X %02X %02X %02X %02X ",
 		i8080->MEM[offset + 0], i8080->MEM[offset + 1], i8080->MEM[offset + 2],
 		i8080->MEM[offset + 3], i8080->MEM[offset + 4], i8080->MEM[offset + 5],
 		i8080->MEM[offset + 6], i8080->MEM[offset + 7]);
-	int result = replace_pattern(line, pattern, "0x%04x: %s", offset, text);
+	int result = replace_pattern(line, pattern, "0x%04X: %s", offset, text);
 	free(text);
 	return result;
 }
@@ -146,7 +154,8 @@ void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 		memcpy(screen->screen_text[i], screen->screen_format[i], MAX_FORMAT_WIDTH);
 
 	for (int i = 0; i < MAX_HISTORY_SIZE; i++) {
-		screen->prev_address[i] = screen->instruction_history[(screen->queue_index + MAX_HISTORY_SIZE - i) % MAX_HISTORY_SIZE];
+		const int index = screen->queue_index + MAX_HISTORY_SIZE - i;
+		screen->prev_address[i] = screen->instruction_history[index % MAX_HISTORY_SIZE];
 	}
 	memset(screen->next_address, 0, (MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
 	uint16_t fake_pc = i8080->PC;
@@ -163,17 +172,18 @@ void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 	}
 
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++) {
+		char* text = screen->screen_text[i];
 		for (int j = 0; j < 8; j++) {
-			replace_pattern(screen->screen_text[i], register_hex_strings[j], "0x%02x", i8080->REG[j]);
-			replace_pattern(screen->screen_text[i], register_dec_strings[j], "%03d", i8080->REG[j]);
+			replace_pattern(text, register_hex_strings[j], "0x%02X", i8080->REG[j]);
+			replace_pattern(text, register_dec_strings[j], "%03d", i8080->REG[j]);
 			if (flag_strings[j] != "\0") {
-				replace_pattern(screen->screen_text[i], flag_strings[j], " %1d", (i8080->F >> j) & 1);
+				replace_pattern(text, flag_strings[j], " %1d", (i8080->F >> j) & 1);
 			}
 		}
-		replace_pattern(screen->screen_text[i], "SPHEEX", "0x%04x", i8080->SP);
-		replace_pattern(screen->screen_text[i], "PCHEEX", "0x%04x", i8080->PC);
-		replace_pattern(screen->screen_text[i], "FH", " %1d", i8080->HALT);
-		replace_pattern(screen->screen_text[i], "FI", " %1d", i8080->INT);
+		replace_pattern(text, "SPHEEX", "0x%04X", i8080->SP);
+		replace_pattern(text, "PCHEEX", "0x%04X", i8080->PC);
+		replace_pattern(text, "FH", " %1d", i8080->HALT);
+		replace_pattern(text, "FI", " %1d", i8080->INT);
 	}
 
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++) {
@@ -182,29 +192,33 @@ void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 			if (ptr != NULL) {
 				int offset = ptr - screen->screen_text[i];
 				char* template_format = (char*)malloc(TEMPLATE_MAX_WIDTH[j] * sizeof(char));
+				const size_t template_len = strlen(template_strings[j]);
 				memset(template_format, ' ', TEMPLATE_MAX_WIDTH[j]);
 				template_format[TEMPLATE_MAX_WIDTH[j] - 1] = 0;
-				memcpy(template_format, template_strings[j], strlen(template_strings[j]));
+				memcpy(template_format, template_strings[j], template_len);
 
-				int num = atoi(&screen->screen_text[i][offset + strlen(template_strings[j])]);
-				memcpy(template_format + strlen(template_strings[j]),
-					&screen->screen_text[i][offset + strlen(template_strings[j])],
+				int num = atoi(&screen->screen_text[i][offset + template_len]);
+				memcpy(template_format + template_len,
+					&screen->screen_text[i][offset + template_len],
 					NUMBERS_MAX_WIDTH[j]);
 				switch (j) {
 				case 0: //PROGRAM+
-					replace_program(i8080, screen->screen_text[i], template_format, num, screen->next_address);
+					replace_program(i8080, screen->screen_text[i],
+						template_format, num, screen->next_address);
 					break;
 				case 1: //PROGRAM-
-					replace_program(i8080, screen->screen_text[i], template_format, num, screen->prev_address);
+					replace_program(i8080, screen->screen_text[i], 
+						template_format, num, screen->prev_address);
 					break;
 				case 2: //STDOUT
-					replace_pattern(screen->screen_text[i], template_format, "%-79s ", screen->standard_output[num]);
+					replace_pattern(screen->screen_text[i],
+						template_format, "%-79s ", screen->standard_output[num]);
 					break;
 				case 3: //MEM
-					replace_memory(i8080, screen->screen_text[i], template_format, num, screen->memory_offset);
+					replace_memory(i8080, screen->screen_text[i],
+						template_format, num, screen->memory_offset);
 					break;
 				}
-
 				free(template_format);
 			}
 		}
@@ -213,6 +227,7 @@ void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 		printf(screen->screen_text[i]);
 	}
 }
+
 // initialize necesary variables for screen
 int screen_initialize(SCREEN* screen) {
 	setlocale(LC_ALL, "pl_PL.UTF-8");
@@ -252,6 +267,7 @@ int screen_initialize(SCREEN* screen) {
 	}
 	return 0;
 }
+
 // deallocate used memory blocks
 void screen_destroy(SCREEN* screen) {
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++) {
@@ -270,10 +286,11 @@ void screen_destroy(SCREEN* screen) {
 	free(screen->next_address);
 	memset(screen, 0, sizeof(SCREEN));
 }
+
 // add instruction to history
 void add_to_history(SCREEN* screen, uint16_t pc) {
 	screen->instruction_history[screen->queue_index] = pc;
-	screen->queue_index = (++screen->queue_index % MAX_HISTORY_SIZE);
+	screen->queue_index = (screen->queue_index++ % MAX_HISTORY_SIZE);
 }
 
 void draw_screen(DRAW_SCR_ARGS args) {
@@ -282,4 +299,21 @@ void draw_screen(DRAW_SCR_ARGS args) {
 	while (1) {
 		print_screen(screen, i8080);
 	}
+}
+
+void process_input(DRAW_SCR_ARGS args) {
+	SCREEN* screen = args.screen;
+	INTEL_8080* i8080 = args.i8080;
+	initialize_keys();
+	while (1) {
+		switch (getch()) {
+		// breakpoint
+		case 'b': i8080->HALT = SET; break;
+		// step
+		case 's': i8080->STEPPING = SET; i8080->HALT = RESET; break;
+		// run
+		case 'r': i8080->STEPPING = RESET; i8080->HALT = RESET; break;
+		}
+	}
+	cleanup_keys();
 }

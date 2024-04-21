@@ -114,6 +114,7 @@ typedef struct _INTEL_8080 {
 	uint8_t INT_PENDING; // has CPU pending interrupt
 	uint8_t INT_VECTOR; // number of RST routine to execute
 
+	uint8_t  STEPPING;
 	uint32_t CYCLES;
 	uint32_t INSTRUCTIONS;
 } INTEL_8080;

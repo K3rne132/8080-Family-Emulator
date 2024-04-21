@@ -21,10 +21,13 @@
     <ClInclude Include="memdump.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="interface.h">
+    <ClInclude Include="debug_console.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
     <ClInclude Include="bdos.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="system.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,10 +38,13 @@
     <ClCompile Include="i8080emulator.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="interface.cc">
+    <ClCompile Include="debug_console.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="bdos.cc">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="system.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>

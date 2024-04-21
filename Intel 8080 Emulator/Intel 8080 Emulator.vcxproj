@@ -129,14 +129,16 @@
   <ItemGroup>
     <ClInclude Include="bdos.h" />
     <ClInclude Include="i8080.h" />
-    <ClInclude Include="interface.h" />
+    <ClInclude Include="debug_console.h" />
     <ClInclude Include="memdump.h" />
+    <ClInclude Include="system.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bdos.cc" />
     <ClCompile Include="i8080.cc" />
     <ClCompile Include="i8080emulator.cc" />
-    <ClCompile Include="interface.cc" />
+    <ClCompile Include="debug_console.cc" />
+    <ClCompile Include="system.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="intel8080.cpf" />

@@ -14,7 +14,7 @@
 
 #define MAX_HISTORY_SIZE  8
 
-#define FORMAT_SKIP    "                       "
+#define FORMAT_SKIP "                       "
 
 
 
@@ -69,3 +69,4 @@ void screen_destroy(SCREEN* screen);
 void add_to_history(SCREEN* screen, uint16_t pc);
 void print_screen(SCREEN* screen, INTEL_8080* i8080);
 void draw_screen(DRAW_SCR_ARGS args);
+void process_input(DRAW_SCR_ARGS args);
