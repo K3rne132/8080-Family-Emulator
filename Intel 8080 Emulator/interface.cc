@@ -58,7 +58,7 @@ static const uint8_t OPCODE_LENGTH[256] = {
 	1, 1, 3, 1, 3, 1, 2, 0, 1, 0, 3, 1, 3, 1, 2, 0, // 0xE0 - 0xEF
 	1, 1, 3, 1, 3, 1, 2, 0, 1, 1, 3, 1, 3, 1, 2, 0  // 0xF0 - 0xFF
 };
-
+// read screen format file from disk
 int read_screen_format(
 	SCREEN* screen,
 	const char* screen_format_file
@@ -75,7 +75,7 @@ int read_screen_format(
 	fclose(file);
 	return 0;
 }
-
+// replaces known pattern with given data
 int replace_pattern(
 	char* line,
 	const char* pattern,
@@ -100,7 +100,7 @@ int replace_pattern(
 	free(replace);
 	return 0;
 }
-
+// replaces memory box with program with actual data from procesor memory
 int replace_program(
 	INTEL_8080* i8080,
 	char* line,
@@ -118,7 +118,7 @@ int replace_program(
 	free(text);
 	return result;
 }
-
+// replaces memory box in screen template with actual data from procesor memory
 int replace_memory(
 	INTEL_8080* i8080,
 	char* line,
@@ -139,14 +139,15 @@ int replace_memory(
 	return result;
 }
 
-void prepare_screen(SCREEN* screen, INTEL_8080* i8080) {
+// prints console screen in console
+void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 	printf("\033[H");
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++)
 		memcpy(screen->screen_text[i], screen->screen_format[i], MAX_FORMAT_WIDTH);
 
-	for (int i = 0; i < MAX_HISTORY_SIZE; i++)
-		screen->prev_address[i] = screen->instruction_history[(screen->queue_index - i) % MAX_HISTORY_SIZE];
-
+	for (int i = 0; i < MAX_HISTORY_SIZE; i++) {
+		screen->prev_address[i] = screen->instruction_history[(screen->queue_index + MAX_HISTORY_SIZE - i) % MAX_HISTORY_SIZE];
+	}
 	memset(screen->next_address, 0, (MAX_HISTORY_SIZE + 1) * sizeof(uint16_t));
 	uint16_t fake_pc = i8080->PC;
 	for (int j = 0; j <= MAX_HISTORY_SIZE; j++) {
@@ -212,7 +213,7 @@ void prepare_screen(SCREEN* screen, INTEL_8080* i8080) {
 		printf(screen->screen_text[i]);
 	}
 }
-
+// initialize necesary variables for screen
 int screen_initialize(SCREEN* screen) {
 	setlocale(LC_ALL, "pl_PL.UTF-8");
 	memset(screen, 0, sizeof(SCREEN));
@@ -243,15 +244,15 @@ int screen_initialize(SCREEN* screen) {
 		memset(screen->standard_output[i], ' ', MAX_STDOUT_WIDTH);
 	}
 
-	screen->prev_address = (uint16_t*)calloc((MAX_HISTORY_SIZE + 1), sizeof(uint16_t));
-	screen->next_address = (uint16_t*)calloc((MAX_HISTORY_SIZE + 1), sizeof(uint16_t));
+	screen->prev_address = (uint16_t*)calloc((MAX_HISTORY_SIZE), sizeof(uint16_t));
+	screen->next_address = (uint16_t*)calloc((MAX_HISTORY_SIZE), sizeof(uint16_t));
 	if (!screen->prev_address || !screen->next_address) {
 		screen_destroy(screen);
 		return -104;
 	}
 	return 0;
 }
-
+// deallocate used memory blocks
 void screen_destroy(SCREEN* screen) {
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++) {
 		free(screen->screen_format[i]);
@@ -269,16 +270,16 @@ void screen_destroy(SCREEN* screen) {
 	free(screen->next_address);
 	memset(screen, 0, sizeof(SCREEN));
 }
-
+// add instruction to history
 void add_to_history(SCREEN* screen, uint16_t pc) {
 	screen->instruction_history[screen->queue_index] = pc;
-	screen->queue_index = (screen->queue_index++ % MAX_HISTORY_SIZE);
+	screen->queue_index = (++screen->queue_index % MAX_HISTORY_SIZE);
 }
 
 void draw_screen(DRAW_SCR_ARGS args) {
 	SCREEN* screen = args.screen;
 	INTEL_8080* i8080 = args.i8080;
 	while (1) {
-		prepare_screen(screen, i8080);
+		print_screen(screen, i8080);
 	}
 }

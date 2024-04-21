@@ -206,6 +206,7 @@ static inline int emulate(
 			add_to_history(screen, i8080->PC);
 			i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
 		}
+
 		cycles++;
 	}
 	return 0;
@@ -226,8 +227,9 @@ int main(int argc, char** argv) {
 	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
 	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
 	read_screen_format(&screen, "intel8080.cpf");
-
+	
 	DRAW_SCR_ARGS args = { &screen, &i8080 };
+	
 	HANDLE thread = CreateThread(
 		NULL,
 		0,
