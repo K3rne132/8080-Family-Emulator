@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
 #include "debug_console.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 #include <string.h>
 #include "system.h"
 
-#define MAKEWORD(a,b) ((a)|(b<<8))
+#define MAKE_WORD(a,b) ((a)|(b<<8))
 
 static const char* OPCODE_NAME[256] = {
 	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
@@ -64,11 +65,10 @@ static const uint8_t OPCODE_LENGTH[256] = {
 
 // read screen format file from disk
 int read_screen_format(
-	SCREEN* screen,
+	DBG_CONSOLE* screen,
 	const char* screen_format_file
 ) {
-	FILE* file;
-	fopen_s(&file, screen_format_file, "r");
+	FILE* file =  fopen(screen_format_file, "r");
 	if (file == NULL) {
 		fprintf(stderr, "Could not open file %s\n", screen_format_file);
 		return -1;
@@ -119,7 +119,7 @@ int replace_program(
 	if (text == NULL)
 		return -1;
 	snprintf(text, len, OPCODE_NAME[i8080->MEM[address[num]]],
-		MAKEWORD(i8080->MEM[address[num] + 1], i8080->MEM[address[num] + 2]));
+		MAKE_WORD(i8080->MEM[address[num] + 1], i8080->MEM[address[num] + 2]));
 	int result = replace_pattern(line, pattern,
 		(address[num] != 0) ? ("0x%04X %-15s") : (FORMAT_SKIP), address[num], text);
 	free(text);
@@ -148,7 +148,10 @@ int replace_memory(
 }
 
 // prints console screen in console
-void print_screen(SCREEN* screen, INTEL_8080* i8080) {
+void print_screen(
+	DBG_CONSOLE* screen,
+	INTEL_8080* i8080
+) {
 	printf("\033[H");
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++)
 		memcpy(screen->screen_text[i], screen->screen_format[i], MAX_FORMAT_WIDTH);
@@ -229,9 +232,11 @@ void print_screen(SCREEN* screen, INTEL_8080* i8080) {
 }
 
 // initialize necesary variables for screen
-int screen_initialize(SCREEN* screen) {
+int screen_initialize(
+	DBG_CONSOLE* screen
+) {
 	setlocale(LC_ALL, "pl_PL.UTF-8");
-	memset(screen, 0, sizeof(SCREEN));
+	memset(screen, 0, sizeof(DBG_CONSOLE));
 
 	screen->screen_format = (char**)calloc(MAX_FORMAT_HEIGHT, sizeof(char*));
 	screen->screen_text = (char**)calloc(MAX_FORMAT_HEIGHT, sizeof(char*));
@@ -269,7 +274,7 @@ int screen_initialize(SCREEN* screen) {
 }
 
 // deallocate used memory blocks
-void screen_destroy(SCREEN* screen) {
+void screen_destroy(DBG_CONSOLE* screen) {
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++) {
 		free(screen->screen_format[i]);
 		free(screen->screen_text[i]);
@@ -284,26 +289,26 @@ void screen_destroy(SCREEN* screen) {
 
 	free(screen->prev_address);
 	free(screen->next_address);
-	memset(screen, 0, sizeof(SCREEN));
+	memset(screen, 0, sizeof(DBG_CONSOLE));
 }
 
 // add instruction to history
-void add_to_history(SCREEN* screen, uint16_t pc) {
+void add_to_history(DBG_CONSOLE* screen, uint16_t pc) {
 	screen->instruction_history[screen->queue_index] = pc;
-	screen->queue_index = (screen->queue_index++ % MAX_HISTORY_SIZE);
+	screen->queue_index = (++screen->queue_index % MAX_HISTORY_SIZE);
 }
 
-void draw_screen(DRAW_SCR_ARGS args) {
-	SCREEN* screen = args.screen;
-	INTEL_8080* i8080 = args.i8080;
+void draw_screen(DRAW_SCR_ARGS* args) {
+	DBG_CONSOLE* screen = args->screen;
+	INTEL_8080* i8080 = args->i8080;
 	while (1) {
 		print_screen(screen, i8080);
 	}
 }
 
-void process_input(DRAW_SCR_ARGS args) {
-	SCREEN* screen = args.screen;
-	INTEL_8080* i8080 = args.i8080;
+void process_input(DRAW_SCR_ARGS* args) {
+	DBG_CONSOLE* screen = args->screen;
+	INTEL_8080* i8080 = args->i8080;
 	initialize_keys();
 	while (1) {
 		switch (getch()) {
@@ -316,4 +321,26 @@ void process_input(DRAW_SCR_ARGS args) {
 		}
 	}
 	cleanup_keys();
+}
+
+void put_character(DBG_CONSOLE* screen, char c) {
+	int si = screen->standard_index;
+	int row = si / MAX_STDOUT_WIDTH;
+	if (si / MAX_STDOUT_WIDTH >= MAX_STDOUT_HEIGHT) {
+		for (int i = 0; i < MAX_STDOUT_HEIGHT; i++)
+			memset(screen->standard_output[i], ' ', MAX_STDOUT_WIDTH);
+		screen->standard_index = 0;
+		si = screen->standard_index;
+		row = si / MAX_STDOUT_WIDTH;
+	}
+
+	if (c == '\n')
+		screen->standard_index = ((row) + 1) * MAX_STDOUT_WIDTH;
+	else if (c == '\7') { // BELL
+		putchar(c);
+	}
+	else if (c >= ' ') {
+		screen->standard_output[row][si % MAX_STDOUT_WIDTH] = c;
+		screen->standard_index++;
+	}
 }

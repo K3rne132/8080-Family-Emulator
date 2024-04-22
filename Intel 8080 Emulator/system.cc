@@ -1,7 +1,7 @@
 #include "system.h"
 #ifdef _WIN32
 
-THREAD thread_create(void* worker, void* args) {
+THREAD thread_create(void* (*worker)(void*), void* args) {
 	return CreateThread(
 		NULL,
 		0,
@@ -22,7 +22,7 @@ void cleanup_keys() {}
 
 #else
 
-THREAD thread_create(void* worker, void* args) {
+THREAD thread_create(void* (*worker)(void*), void* args) {
 	pthread_t thread = NULL;
 	pthread_create(&thread, NULL, worker, args);
 	return thread;

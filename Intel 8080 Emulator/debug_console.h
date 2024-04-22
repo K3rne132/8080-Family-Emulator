@@ -44,7 +44,7 @@ static const uint32_t NUMBERS_MAX_WIDTH[] = {
 
 
 
-typedef struct _SCREEN {
+typedef struct _DBG_CONSOLE {
 	char** screen_format;
 	char** screen_text;
 	char** standard_output;
@@ -54,19 +54,20 @@ typedef struct _SCREEN {
 	uint16_t memory_offset;
 	uint16_t* prev_address;
 	uint16_t* next_address;
-} SCREEN;
+} DBG_CONSOLE;
 
 
 typedef struct _DRAW_SCR_ARGS {
-	SCREEN* screen;
+	DBG_CONSOLE* screen;
 	INTEL_8080* i8080;
 } DRAW_SCR_ARGS;
 
 
-int read_screen_format(SCREEN* screen, const char* SCREEN_FORMAT_FILE);
-int screen_initialize(SCREEN* screen);
-void screen_destroy(SCREEN* screen);
-void add_to_history(SCREEN* screen, uint16_t pc);
-void print_screen(SCREEN* screen, INTEL_8080* i8080);
-void draw_screen(DRAW_SCR_ARGS args);
-void process_input(DRAW_SCR_ARGS args);
+int read_screen_format(DBG_CONSOLE* screen, const char* SCREEN_FORMAT_FILE);
+int screen_initialize(DBG_CONSOLE* screen);
+void screen_destroy(DBG_CONSOLE* screen);
+void add_to_history(DBG_CONSOLE* screen, uint16_t pc);
+void print_screen(DBG_CONSOLE* screen, INTEL_8080* i8080);
+void draw_screen(DRAW_SCR_ARGS* args);
+void process_input(DRAW_SCR_ARGS* args);
+void put_character(DBG_CONSOLE* screen, char c);

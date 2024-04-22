@@ -11,7 +11,7 @@ typedef HANDLE THREAD;
 typedef pthread_t THREAD;
 #endif
 
-THREAD thread_create(void* worker, void* args);
+THREAD thread_create(void* (*worker)(void*), void* args);
 void thread_destroy(THREAD thread);
 void initialize_keys();
 void cleanup_keys();

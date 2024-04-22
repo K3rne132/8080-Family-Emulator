@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include "i8080.h"
 
 // returns a current opcode at address of program counter

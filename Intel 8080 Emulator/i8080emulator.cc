@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -116,8 +117,7 @@ static inline int write_file_to_memory(
 	const char* filename,
 	const uint16_t address
 ) {
-	FILE* file = NULL;
-	fopen_s(&file, filename, "rb");
+	FILE* file = fopen(filename, "rb");
 	if (file == NULL) {
 		fprintf(stderr, "Could not open file %s\n", filename);
 		return 1;
@@ -147,7 +147,7 @@ static inline void read_memory(
 static inline int emulate(
 	INTEL_8080* i8080,
 	uint8_t bdos,
-	SCREEN* screen
+	DBG_CONSOLE* screen
 ) {
 	while (1) {
 		if (i8080->INT && i8080->INT_PENDING) {
@@ -175,9 +175,9 @@ static inline int emulate(
 
 int main(int argc, char** argv) {
 	INTEL_8080 i8080;
-	SCREEN screen;
+	DBG_CONSOLE screen;
 	if (screen_initialize(&screen)) {
-		fprintf(stderr, "Could not initialize SCREEN structure\n");
+		fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
 		return 1;
 	}
 	if (i8080_initialize(&i8080, 0x0100, 0x0000)) {
@@ -194,13 +194,13 @@ int main(int argc, char** argv) {
 	
 	DRAW_SCR_ARGS args = { &screen, &i8080 };
 	
-	THREAD drawing = thread_create(draw_screen, &args);
+	THREAD drawing = thread_create((void*(*)(void*))draw_screen, &args);
 	if (!drawing) {
 		fprintf(stderr, "Starting drawing thread failed\n");
 		return 1;
 	}
-	THREAD input = thread_create(process_input, &args);
-	if (!drawing) {
+	THREAD input = thread_create((void* (*)(void*))process_input, &args);
+	if (!input) {
 		fprintf(stderr, "Starting input processing thread failed\n");
 		return 1;
 	}
