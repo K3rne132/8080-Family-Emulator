@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include "debug_console.h"
+#include "i8080emulator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -294,6 +295,8 @@ void screen_destroy(DBG_CONSOLE* screen) {
 
 // add instruction to history
 void add_to_history(DBG_CONSOLE* screen, uint16_t pc) {
+	if (!screen)
+		return;
 	screen->instruction_history[screen->queue_index] = pc;
 	screen->queue_index = (++screen->queue_index % MAX_HISTORY_SIZE);
 }
@@ -312,18 +315,28 @@ void process_input(DRAW_SCR_ARGS* args) {
 	initialize_keys();
 	while (1) {
 		switch (getch()) {
-		// breakpoint
-		case 'b': i8080->HALT = SET; break;
-		// step
-		case 's': i8080->STEPPING = SET; i8080->HALT = RESET; break;
-		// run
-		case 'r': i8080->STEPPING = RESET; i8080->HALT = RESET; break;
+		case 'b': i8080->HALT = SET; break; // breakpoint
+		case 's': i8080->STEPPING = SET; i8080->HALT = RESET; break; // step
+		case 'r': i8080->STEPPING = RESET; i8080->HALT = RESET; break; // run
+		case '0': interrupt(i8080, 0); break; // RST 0
+		case '1': interrupt(i8080, 1); break; // RST 1
+		case '2': interrupt(i8080, 2); break; // RST 2
+		case '3': interrupt(i8080, 3); break; // RST 3
+		case '4': interrupt(i8080, 4); break; // RST 4
+		case '5': interrupt(i8080, 5); break; // RST 5
+		case '6': interrupt(i8080, 6); break; // RST 6
+		case '7': interrupt(i8080, 7); break; // RST 7
 		}
 	}
 	cleanup_keys();
 }
 
 void put_character(DBG_CONSOLE* screen, char c) {
+	if (!screen) {
+		putchar(c);
+		return;
+	}
+
 	int si = screen->standard_index;
 	int row = si / MAX_STDOUT_WIDTH;
 	if (si / MAX_STDOUT_WIDTH >= MAX_STDOUT_HEIGHT) {

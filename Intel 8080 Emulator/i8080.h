@@ -4,7 +4,11 @@
 #define SET 1
 #define RESET 0
 
-#define SWAPORDER(uint16_t) ((uint16_t)(uint16_t<<8)|(uint16_t>>8))
+#define SWAPORDER(word) ((uint16_t)(word<<8)|(word>>8))
+#define MAKERESULT(bytes, cycles) ((uint16_t)((cycles<<8)|bytes))
+#define GETINSTRUCTIONBYTES(result) ((uint8_t)(result&0x00FF))
+#define GETINSTRUCTIONCYCLES(result) ((uint8_t)((result&0xFF00)>>8))
+
 
 // REGISTER uint8_t INSTRUCTIONS
 typedef enum _REG {
@@ -33,6 +37,11 @@ typedef enum _REG_PAIR {
 } REG_PAIR_ID;
 
 
+struct _INTEL_8080;
+
+typedef uint16_t(*INSTRUCTION)(_INTEL_8080* i8080);
+
+
 
 #pragma pack(push, 1) // pad to 1 uint8_t
 
@@ -58,10 +67,14 @@ typedef struct _status {
 
 // Intel 8080 registers set
 typedef struct _INTEL_8080 {
-	// pointer to 64k memory
-	uint8_t* MEM;
+	
+	uint8_t* MEM; // pointer to 64k memory
 
 	uint8_t* PORT; // 0 - 255 I/O ports
+
+	uint32_t CYCLES; // number of cycles
+	const INSTRUCTION* INSTRUCTIONS; // pointer to opcode table
+	uint8_t  STEPPING; // is instruction stepping
 
 	uint16_t PC; // Program Counter
 	uint16_t SP; // Stack Pointer
@@ -114,9 +127,6 @@ typedef struct _INTEL_8080 {
 	uint8_t INT_PENDING; // has CPU pending interrupt
 	uint8_t INT_VECTOR; // number of RST routine to execute
 
-	uint8_t  STEPPING;
-	uint32_t CYCLES;
-	uint32_t INSTRUCTIONS;
 } INTEL_8080;
 
 #pragma pack(pop)
@@ -128,95 +138,93 @@ uint16_t read_uint16_t_from_stack(INTEL_8080* i8080);
 
 // INSTRUCTION SET
 
-typedef uint8_t(*INSTRUCTION)(INTEL_8080* i8080);
+uint16_t cmc(INTEL_8080* i8080);
+uint16_t stc(INTEL_8080* i8080);
 
-uint8_t cmc(INTEL_8080* i8080);
-uint8_t stc(INTEL_8080* i8080);
+uint16_t inr(INTEL_8080* i8080);
+uint16_t dcr(INTEL_8080* i8080);
+uint16_t cma(INTEL_8080* i8080);
+uint16_t daa(INTEL_8080* i8080);
 
-uint8_t inr(INTEL_8080* i8080);
-uint8_t dcr(INTEL_8080* i8080);
-uint8_t cma(INTEL_8080* i8080);
-uint8_t daa(INTEL_8080* i8080);
+uint16_t nop(INTEL_8080* i8080);
 
-uint8_t nop(INTEL_8080* i8080);
+uint16_t mov(INTEL_8080* i8080);
+uint16_t stax(INTEL_8080* i8080);
+uint16_t ldax(INTEL_8080* i8080);
 
-uint8_t mov(INTEL_8080* i8080);
-uint8_t stax(INTEL_8080* i8080);
-uint8_t ldax(INTEL_8080* i8080);
+uint16_t add(INTEL_8080* i8080);
+uint16_t adc(INTEL_8080* i8080);
+uint16_t sub(INTEL_8080* i8080);
+uint16_t sbb(INTEL_8080* i8080);
+uint16_t ana(INTEL_8080* i8080);
+uint16_t xra(INTEL_8080* i8080);
+uint16_t ora(INTEL_8080* i8080);
+uint16_t cmp(INTEL_8080* i8080);
 
-uint8_t add(INTEL_8080* i8080);
-uint8_t adc(INTEL_8080* i8080);
-uint8_t sub(INTEL_8080* i8080);
-uint8_t sbb(INTEL_8080* i8080);
-uint8_t ana(INTEL_8080* i8080);
-uint8_t xra(INTEL_8080* i8080);
-uint8_t ora(INTEL_8080* i8080);
-uint8_t cmp(INTEL_8080* i8080);
+uint16_t rlc(INTEL_8080* i8080);
+uint16_t rrc(INTEL_8080* i8080);
+uint16_t ral(INTEL_8080* i8080);
+uint16_t rar(INTEL_8080* i8080);
 
-uint8_t rlc(INTEL_8080* i8080);
-uint8_t rrc(INTEL_8080* i8080);
-uint8_t ral(INTEL_8080* i8080);
-uint8_t rar(INTEL_8080* i8080);
+uint16_t push(INTEL_8080* i8080);
+uint16_t pop(INTEL_8080* i8080);
+uint16_t dad(INTEL_8080* i8080);
+uint16_t inx(INTEL_8080* i8080);
+uint16_t dcx(INTEL_8080* i8080);
+uint16_t xchg(INTEL_8080* i8080);
+uint16_t xthl(INTEL_8080* i8080);
+uint16_t sphl(INTEL_8080* i8080);
 
-uint8_t push(INTEL_8080* i8080);
-uint8_t pop(INTEL_8080* i8080);
-uint8_t dad(INTEL_8080* i8080);
-uint8_t inx(INTEL_8080* i8080);
-uint8_t dcx(INTEL_8080* i8080);
-uint8_t xchg(INTEL_8080* i8080);
-uint8_t xthl(INTEL_8080* i8080);
-uint8_t sphl(INTEL_8080* i8080);
+uint16_t lxi(INTEL_8080* i8080);
+uint16_t mvi(INTEL_8080* i8080);
+uint16_t adi(INTEL_8080* i8080);
+uint16_t aci(INTEL_8080* i8080);
+uint16_t sui(INTEL_8080* i8080);
+uint16_t sbi(INTEL_8080* i8080);
+uint16_t ani(INTEL_8080* i8080);
+uint16_t xri(INTEL_8080* i8080);
+uint16_t ori(INTEL_8080* i8080);
+uint16_t cpi(INTEL_8080* i8080);
 
-uint8_t lxi(INTEL_8080* i8080);
-uint8_t mvi(INTEL_8080* i8080);
-uint8_t adi(INTEL_8080* i8080);
-uint8_t aci(INTEL_8080* i8080);
-uint8_t sui(INTEL_8080* i8080);
-uint8_t sbi(INTEL_8080* i8080);
-uint8_t ani(INTEL_8080* i8080);
-uint8_t xri(INTEL_8080* i8080);
-uint8_t ori(INTEL_8080* i8080);
-uint8_t cpi(INTEL_8080* i8080);
+uint16_t sta(INTEL_8080* i8080);
+uint16_t lda(INTEL_8080* i8080);
+uint16_t shld(INTEL_8080* i8080);
+uint16_t lhld(INTEL_8080* i8080);
 
-uint8_t sta(INTEL_8080* i8080);
-uint8_t lda(INTEL_8080* i8080);
-uint8_t shld(INTEL_8080* i8080);
-uint8_t lhld(INTEL_8080* i8080);
+uint16_t pchl(INTEL_8080* i8080);
+uint16_t jmp(INTEL_8080* i8080);
+uint16_t jc(INTEL_8080* i8080);
+uint16_t jnc(INTEL_8080* i8080);
+uint16_t jz(INTEL_8080* i8080);
+uint16_t jnz(INTEL_8080* i8080);
+uint16_t jm(INTEL_8080* i8080);
+uint16_t jp(INTEL_8080* i8080);
+uint16_t jpe(INTEL_8080* i8080);
+uint16_t jpo(INTEL_8080* i8080);
 
-uint8_t pchl(INTEL_8080* i8080);
-uint8_t jmp(INTEL_8080* i8080);
-uint8_t jc(INTEL_8080* i8080);
-uint8_t jnc(INTEL_8080* i8080);
-uint8_t jz(INTEL_8080* i8080);
-uint8_t jnz(INTEL_8080* i8080);
-uint8_t jm(INTEL_8080* i8080);
-uint8_t jp(INTEL_8080* i8080);
-uint8_t jpe(INTEL_8080* i8080);
-uint8_t jpo(INTEL_8080* i8080);
+uint16_t call(INTEL_8080* i8080);
+uint16_t cc(INTEL_8080* i8080);
+uint16_t cnc(INTEL_8080* i8080);
+uint16_t cz(INTEL_8080* i8080);
+uint16_t cnz(INTEL_8080* i8080);
+uint16_t cm(INTEL_8080* i8080);
+uint16_t cp(INTEL_8080* i8080);
+uint16_t cpe(INTEL_8080* i8080);
+uint16_t cpo(INTEL_8080* i8080);
 
-uint8_t call(INTEL_8080* i8080);
-uint8_t cc(INTEL_8080* i8080);
-uint8_t cnc(INTEL_8080* i8080);
-uint8_t cz(INTEL_8080* i8080);
-uint8_t cnz(INTEL_8080* i8080);
-uint8_t cm(INTEL_8080* i8080);
-uint8_t cp(INTEL_8080* i8080);
-uint8_t cpe(INTEL_8080* i8080);
-uint8_t cpo(INTEL_8080* i8080);
+uint16_t ret(INTEL_8080* i8080);
+uint16_t rc(INTEL_8080* i8080);
+uint16_t rnc(INTEL_8080* i8080);
+uint16_t rz(INTEL_8080* i8080);
+uint16_t rnz(INTEL_8080* i8080);
+uint16_t rm(INTEL_8080* i8080);
+uint16_t rp(INTEL_8080* i8080);
+uint16_t rpe(INTEL_8080* i8080);
+uint16_t rpo(INTEL_8080* i8080);
 
-uint8_t ret(INTEL_8080* i8080);
-uint8_t rc(INTEL_8080* i8080);
-uint8_t rnc(INTEL_8080* i8080);
-uint8_t rz(INTEL_8080* i8080);
-uint8_t rnz(INTEL_8080* i8080);
-uint8_t rm(INTEL_8080* i8080);
-uint8_t rp(INTEL_8080* i8080);
-uint8_t rpe(INTEL_8080* i8080);
-uint8_t rpo(INTEL_8080* i8080);
-
-uint8_t rst(INTEL_8080* i8080);
-uint8_t ei(INTEL_8080* i8080);
-uint8_t di(INTEL_8080* i8080);
-uint8_t in(INTEL_8080* i8080);
-uint8_t out(INTEL_8080* i8080);
-uint8_t hlt(INTEL_8080* i8080);
+uint16_t rst(INTEL_8080* i8080);
+uint16_t ei(INTEL_8080* i8080);
+uint16_t di(INTEL_8080* i8080);
+uint16_t in(INTEL_8080* i8080);
+uint16_t out(INTEL_8080* i8080);
+uint16_t hlt(INTEL_8080* i8080);

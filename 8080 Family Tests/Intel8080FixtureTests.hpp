@@ -1,6 +1,11 @@
 #pragma once
 #include "pch.h"
 #include "i8080.h"
+#include <cstdlib>
+#include <cstring>
+
+typedef uint16_t WORD;
+typedef uint8_t  BYTE;
 
 class Intel8080FixtureTests : public testing::Test {
 protected:
@@ -27,7 +32,7 @@ protected:
     }
     
     void SetUp() override {
-        memset(&CPU, 0, sizeof(INTEL_8080));
+        std::memset(&CPU, 0, sizeof(INTEL_8080));
         CPU.F = 0b00000010;
         CPU.MEM = (BYTE*)calloc(0x10000, sizeof(BYTE));
         CPU.PORT = (BYTE*)calloc(0x100, sizeof(BYTE));

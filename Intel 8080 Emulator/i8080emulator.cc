@@ -3,13 +3,10 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "i8080.h"
-#include "memdump.h"
-#include "debug_console.h"
 #include "bdos.h"
 #include "system.h"
 
-static const INSTRUCTION OPCODE_TABLE[256] = {
+const INSTRUCTION OPCODE_TABLE[256] = {
 	nop, lxi,  stax, inx,  inr, dcr,  mvi, rlc, // 0x00 - 0x07
 	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
 	nop, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
@@ -44,13 +41,7 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 	rm,  sphl, jm,   ei,   cm,  nop,  cpi, rst  // 0xF8 - 0xFF
 };
 
-static uint16_t uint16_t_arg(const INTEL_8080* i8080) {
-	uint16_t result = i8080->MEM[i8080->PC + 1] << 8;
-	result |= i8080->MEM[i8080->PC + 2];
-	return result;
-}
-
-static inline int i8080_initialize(
+int i8080_initialize(
 	INTEL_8080* i8080,
 	const uint16_t origin_pc,
 	const uint16_t origin_sp
@@ -59,6 +50,7 @@ static inline int i8080_initialize(
 	i8080->F = 0b00000010;
 	i8080->PC = origin_pc;
 	i8080->SP = origin_sp;
+	i8080->INSTRUCTIONS = OPCODE_TABLE;
 	i8080->MEM = (uint8_t*)calloc(0x10000, sizeof(uint8_t));
 	if (i8080->MEM == NULL)
 		return 1;
@@ -71,7 +63,7 @@ static inline int i8080_initialize(
 	return 0;
 }
 
-static inline void i8080_destroy(
+void i8080_destroy(
 	INTEL_8080* i8080
 ) {
 	free(i8080->MEM);
@@ -79,7 +71,7 @@ static inline void i8080_destroy(
 	memset(i8080, 0, sizeof(INTEL_8080));
 }
 
-static inline void port_write(
+void port_write(
 	INTEL_8080* i8080,
 	const uint8_t port,
 	const uint8_t data
@@ -87,24 +79,24 @@ static inline void port_write(
 	i8080->PORT[port] = data;
 }
 
-static inline uint8_t port_read(
+uint8_t port_read(
 	const INTEL_8080* i8080,
 	const uint8_t port
 ) {
 	return i8080->PORT[port];
 }
 
-static inline int interrupt(
+int interrupt(
 	INTEL_8080* i8080,
 	const uint8_t vector // RST <vector>
 ) {
 	assert(vector >= 0 && vector <= 7);
 	i8080->INT_PENDING = SET;
-	i8080->INT_VECTOR = vector;
+	i8080->INT_VECTOR = 0xC7 + 8 * vector;
 	return i8080->INT;
 }
 
-static inline void write_memory(
+void write_memory(
 	INTEL_8080* i8080,
 	const void* data, // pointer to data
 	const uint16_t size   // number of uint8_ts to write
@@ -112,7 +104,7 @@ static inline void write_memory(
 	memcpy(i8080->MEM, data, size);
 }
 
-static inline int write_file_to_memory(
+int write_file_to_memory(
 	INTEL_8080* i8080,
 	const char* filename,
 	const uint16_t address
@@ -128,7 +120,7 @@ static inline int write_file_to_memory(
 		fclose(file);
 		fprintf(stderr, "Filename %s with size %hXh uint8_ts is too large to "
 			"be loaded at address %hXh\n", filename, size, address);
-		return 1;
+		return 2;
 	}
 	fseek(file, 0, SEEK_SET);
 	fread(&i8080->MEM[address], sizeof(uint8_t), size, file);
@@ -136,19 +128,16 @@ static inline int write_file_to_memory(
 	return 0;
 }
 
-static inline void read_memory(
-	const INTEL_8080* i8080,
-	const uint16_t address, // pointer to address
-	const uint16_t size   // number of uint8_ts to read
-) {
-	memdump(&i8080->MEM[address], size);
-}
-
-static inline int emulate(
+int emulate(
 	INTEL_8080* i8080,
 	uint8_t bdos,
 	DBG_CONSOLE* screen
 ) {
+	if (bdos) {
+		i8080->MEM[0x0005] = 0xC9; // ret at bdos syscall
+		i8080->MEM[0x0000] = 0x76; // hlt at 0x0000
+	}
+	uint16_t result = 0;
 	while (1) {
 		if (i8080->INT && i8080->INT_PENDING) {
 			i8080->SP -= 2;
@@ -156,10 +145,11 @@ static inline int emulate(
 			i8080->PC = i8080->INT_PENDING << 3;
 			i8080->INT = 0;
 			i8080->INT_PENDING = 0;
-			i8080->INT_VECTOR = 0;
 			i8080->HALT = 0;
 			add_to_history(screen, i8080->PC);
-			OPCODE_TABLE[i8080->INT_VECTOR](i8080);
+			result = i8080->INSTRUCTIONS[i8080->INT_VECTOR](i8080);
+			i8080->CYCLES += GETINSTRUCTIONCYCLES(result);
+			i8080->INT_VECTOR = 0;
 		}
 		else if (!i8080->HALT) {
 			if (i8080->STEPPING)
@@ -167,48 +157,116 @@ static inline int emulate(
 			if (i8080->PC == 0x0005 && bdos)
 				bdos_syscall(i8080, screen);
 			add_to_history(screen, i8080->PC);
-			i8080->PC += OPCODE_TABLE[i8080->MEM[i8080->PC]](i8080);
+			result = i8080->INSTRUCTIONS[i8080->MEM[i8080->PC]](i8080);
+			i8080->PC += GETINSTRUCTIONBYTES(result);
+			i8080->CYCLES += GETINSTRUCTIONCYCLES(result);
 		}
 	}
 	return 0;
 }
 
+int process_args(
+	const int argc,
+	char** argv,
+	int* input,
+	int* debug,
+	int* bdos,
+	char** filename
+) {
+	assert(input);
+	assert(debug);
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--debug") == 0)
+			*debug = SET;
+		else if (strcmp(argv[i], "--input") == 0)
+			*input = SET;
+		else if (strcmp(argv[i], "--bdos") == 0)
+			*bdos = SET;
+		else if (strncmp(argv[i], "--file=", 7) == 0) {
+			*filename = argv[i] + 7;
+		}
+		else if (strcmp(argv[i], "--help") == 0) {
+			return 1;
+		}
+		else {
+			fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
+			return 1;
+		}
+	}
+	if (!filename)
+		return 1;
+	return 0;
+}
+
 int main(int argc, char** argv) {
-	INTEL_8080 i8080;
-	DBG_CONSOLE screen;
-	if (screen_initialize(&screen)) {
-		fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
+	int is_input = 0;
+	int is_debug = 0;
+	int is_bdos = 0;
+	char* filename = NULL;
+	if (process_args(argc, argv, &is_input, &is_debug, &is_bdos, &filename)) {
+		fprintf(stderr, "Usage: %s <options> --file=<filename>\n"
+			"Available options:\n"
+			"    --debug         Turns on debug console\n"
+			"    --input         Turns on special input handler\n"
+			"    --bdos          Turns on simple bdos calls at 0x0005\n"
+			"    --file=<file>   Selects file to write in memory at 0x0100\n"
+			"    --help=<file>   Displays this help page\n",
+			argv[0]);
 		return 1;
 	}
+
+	INTEL_8080 i8080;
 	if (i8080_initialize(&i8080, 0x0100, 0x0000)) {
 		fprintf(stderr, "Could not initialize INTEL_8080 structure\n");
 		return 1;
 	}
-	i8080.MEM[0x0005] = 0xC9; // ret at bdos syscall
-	i8080.MEM[0x0000] = 0x76; // hlt at 0x0000
-	write_file_to_memory(&i8080, "8080EXER.COM", 0x0100);
-	if (read_screen_format(&screen, "intel8080.cpf")) {
-		fprintf(stderr, "Could not read screen format file %s\n", "intel8080.cpf");
-		return 1;
-	}
-	
-	DRAW_SCR_ARGS args = { &screen, &i8080 };
-	
-	THREAD drawing = thread_create((void*(*)(void*))draw_screen, &args);
-	if (!drawing) {
-		fprintf(stderr, "Starting drawing thread failed\n");
-		return 1;
-	}
-	THREAD input = thread_create((void* (*)(void*))process_input, &args);
-	if (!input) {
-		fprintf(stderr, "Starting input processing thread failed\n");
-		return 1;
-	}
-	
-	emulate(&i8080, SET, &screen);
 
-	thread_destroy(input);
-	thread_destroy(drawing);
-	screen_destroy(&screen);
+	if (write_file_to_memory(&i8080, filename, 0x0100)) {
+		fprintf(stderr, "Error while reading file %s\n", filename);
+		return 1;
+	}
+
+	DBG_CONSOLE screen;
+	THREAD drawing_thread = NULL;
+	THREAD input_thread = NULL;
+	DRAW_SCR_ARGS args = { NULL, &i8080 };
+
+	if (is_debug) {
+		if (screen_initialize(&screen)) {
+			fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
+			return 1;
+		}
+		if (read_screen_format(&screen, "intel8080.cpf")) {
+			fprintf(stderr, "Could not read screen format file %s\n", "intel8080.cpf");
+			return 1;
+		}
+		args.screen = &screen;
+
+		drawing_thread = thread_create((void* (*)(void*))draw_screen, &args);
+		if (!drawing_thread) {
+			fprintf(stderr, "Starting drawing thread failed\n");
+			return 1;
+		}
+	}
+	
+	if (is_input) {
+		input_thread = thread_create((void* (*)(void*))process_input, &args);
+		if (!input_thread) {
+			fprintf(stderr, "Starting input processing thread failed\n");
+			return 1;
+		}
+	}
+	
+	if (is_debug)
+		emulate(&i8080, is_bdos, &screen);
+	else
+		emulate(&i8080, is_bdos, NULL);
+
+	if (is_input)
+		thread_destroy(input_thread);
+	if (is_debug) {
+		thread_destroy(drawing_thread);
+		screen_destroy(&screen);
+	}
 	i8080_destroy(&i8080);
 }

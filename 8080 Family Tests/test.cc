@@ -73,13 +73,13 @@ TEST_F(Intel8080FixtureTests, CMC_STC_InstructionsTest) {
 	ASSERT_EQ(CPU.status.C, 0);
 
 	// then check
-	ASSERT_EQ(cmc(&CPU), 1);
+	ASSERT_EQ(cmc(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.status.C, 1);
 	cmc(&CPU);
 	ASSERT_EQ(CPU.status.C, 0);
 
 	// then check
-	ASSERT_EQ(stc(&CPU), 1);
+	ASSERT_EQ(stc(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.status.C, 1);
 	stc(&CPU);
 	ASSERT_EQ(CPU.status.C, 1);
@@ -90,10 +90,10 @@ TEST_F(Intel8080FixtureTests, INR_DCR_InstructionsTest) {
 	CPU.MEM[CPU.PC] = 0b00000000; // 0 -> B (rest of bits does not matter here)
 
 	// then check B
-	ASSERT_EQ(inr(&CPU), 1);
+	ASSERT_EQ(inr(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.B, 1);
 	ASSERT_EQ(CPU.F, 0b00000010);
-	ASSERT_EQ(dcr(&CPU), 1);
+	ASSERT_EQ(dcr(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.B, 0);
 	ASSERT_EQ(CPU.F, 0b01010110);
 	dcr(&CPU); // underflow
@@ -129,7 +129,7 @@ TEST_F(Intel8080FixtureTests, CMA_InstructionTest) {
 	CPU.A = 0b10101010;
 
 	// then check
-	ASSERT_EQ(cma(&CPU), 1);
+	ASSERT_EQ(cma(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0b01010101);
 	cma(&CPU);
 	ASSERT_EQ(CPU.A, 0b10101010);
@@ -140,7 +140,7 @@ TEST_F(Intel8080FixtureTests, DAA_InstructionTest) {
 	CPU.A = 0x91; // both decimal numbers
 
 	// then check
-	ASSERT_EQ(daa(&CPU), 1);
+	ASSERT_EQ(daa(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0x91); // nothing changed
 	ASSERT_EQ(CPU.F, 0b10000010);
 
@@ -182,12 +182,12 @@ TEST_F(Intel8080FixtureTests, STAX_LDAX_InstructionsTest) {
 	CPU.A = 0xEA;
 
 	// then check
-	ASSERT_EQ(stax(&CPU), 1);
+	ASSERT_EQ(stax(&CPU), MAKERESULT(1, 7));
 	ASSERT_EQ(CPU.MEM[CPU.BC], 0xEA);
 
 	// then check
 	CPU.MEM[CPU.BC] = 0xAB;
-	ASSERT_EQ(ldax(&CPU), 1);
+	ASSERT_EQ(ldax(&CPU), MAKERESULT(1, 7));
 	ASSERT_EQ(CPU.A, 0xAB);
 
 	// init
@@ -211,10 +211,10 @@ TEST_F(Intel8080FixtureTests, ADD_ADC_InstructionsTest) {
 	CPU.MEM[CPU.HL] = 0x12;
 	
 	// then check
-	ASSERT_EQ(add(&CPU), 1); // A + A = 0x20
+	ASSERT_EQ(add(&CPU), MAKERESULT(1, 4)); // A + A = 0x20
 	ASSERT_EQ(CPU.A, 0x20);
 	ASSERT_EQ(CPU.F, 0b00000010);
-	ASSERT_EQ(adc(&CPU), 1); // A + A + 0 = 0x40
+	ASSERT_EQ(adc(&CPU), MAKERESULT(1, 4)); // A + A + 0 = 0x40
 	ASSERT_EQ(CPU.A, 0x40);
 	ASSERT_EQ(CPU.F, 0b00000010);
 
@@ -238,12 +238,12 @@ TEST_F(Intel8080FixtureTests, SUB_SBB_CMP_InstructionsTest) {
 	CPU.MEM[CPU.HL] = 0x12;
 
 	// then check
-	ASSERT_EQ(cmp(&CPU), 1);
+	ASSERT_EQ(cmp(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.F, 0b10000010);
-	ASSERT_EQ(sub(&CPU), 1); // A - E = 0xDF
+	ASSERT_EQ(sub(&CPU), MAKERESULT(1, 4)); // A - E = 0xDF
 	ASSERT_EQ(CPU.A, 0xDF);
 	ASSERT_EQ(CPU.F, 0b10000010);
-	ASSERT_EQ(sbb(&CPU), 1); // A - E - 0 = 0xC2
+	ASSERT_EQ(sbb(&CPU), MAKERESULT(1, 4)); // A - E - 0 = 0xC2
 	ASSERT_EQ(CPU.A, 0xC2);
 	ASSERT_EQ(CPU.F, 0b10010010);
 
@@ -269,17 +269,17 @@ TEST_F(Intel8080FixtureTests, ANA_XRA_ORA_InstructionsTest) {
 	CPU.D = 0x89;
 
 	// then check
-	ASSERT_EQ(ana(&CPU), 1);
+	ASSERT_EQ(ana(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0x4A);
 	ASSERT_EQ(CPU.F, 0b00010010);
 
 	CPU.MEM[CPU.PC] = REG_C;
-	ASSERT_EQ(xra(&CPU), 1);
+	ASSERT_EQ(xra(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0xD6);
 	ASSERT_EQ(CPU.F, 0b10000010);
 
 	CPU.MEM[CPU.PC] = REG_D;
-	ASSERT_EQ(ora(&CPU), 1);
+	ASSERT_EQ(ora(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0xDF);
 	ASSERT_EQ(CPU.F, 0b10000010);
 }
@@ -289,7 +289,7 @@ TEST_F(Intel8080FixtureTests, RLC_InstructionTest) {
 	CPU.A = 0b11110010;
 
 	// check
-	ASSERT_EQ(rlc(&CPU), 1);
+	ASSERT_EQ(rlc(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0b11100101);
 	ASSERT_EQ(CPU.status.C, 1);
 }
@@ -299,7 +299,7 @@ TEST_F(Intel8080FixtureTests, RRC_InstructionTest) {
 	CPU.A = 0b11110010;
 
 	// check
-	ASSERT_EQ(rrc(&CPU), 1);
+	ASSERT_EQ(rrc(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0b01111001);
 	ASSERT_EQ(CPU.status.C, 0);
 }
@@ -310,7 +310,7 @@ TEST_F(Intel8080FixtureTests, RAL_InstructionTest) {
 	CPU.status.C = 0;
 
 	// check
-	ASSERT_EQ(ral(&CPU), 1);
+	ASSERT_EQ(ral(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0b01101010);
 	ASSERT_EQ(CPU.status.C, 1);
 }
@@ -321,7 +321,7 @@ TEST_F(Intel8080FixtureTests, RAR_InstructionTest) {
 	CPU.status.C = 1;
 
 	// check
-	ASSERT_EQ(rar(&CPU), 1);
+	ASSERT_EQ(rar(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.A, 0b10110101);
 	ASSERT_EQ(CPU.status.C, 0);
 }
@@ -333,14 +333,14 @@ TEST_F(Intel8080FixtureTests, PUSH_POP_InstructionsTest) {
 	CPU.MEM[CPU.PC] = 0b00000000; // BC
 
 	// check
-	ASSERT_EQ(push(&CPU), 1);
+	ASSERT_EQ(push(&CPU), MAKERESULT(1, 11));
 	ASSERT_EQ(CPU.SP, 0x7FFE);
 	ASSERT_EQ(GetWORDFromMemory(CPU.SP), CPU.BC);
 	ASSERT_EQ(CPU.MEM[CPU.SP], CPU.C);
 	ASSERT_EQ(CPU.MEM[CPU.SP + 1], CPU.B);
 
 	CPU.BC = 0;
-	ASSERT_EQ(pop(&CPU), 1);
+	ASSERT_EQ(pop(&CPU), MAKERESULT(1, 10));
 	ASSERT_EQ(CPU.SP, 0x8000);
 	ASSERT_EQ(CPU.BC, 0x0123);
 
@@ -375,7 +375,7 @@ TEST_F(Intel8080FixtureTests, DAD_InstructionsTest) {
 	CPU.F = 0b00000010;
 
 	// check
-	ASSERT_EQ(dad(&CPU), 1); // HL = DE + HL
+	ASSERT_EQ(dad(&CPU), MAKERESULT(1, 10)); // HL = DE + HL
 	ASSERT_EQ(CPU.HL, 0xCF12);
 	ASSERT_EQ(CPU.status.C, 0);
 }
@@ -386,9 +386,9 @@ TEST_F(Intel8080FixtureTests, INX_DCX_InstructionsTest) {
 	CPU.SP = 0x8000;
 
 	// check
-	ASSERT_EQ(inx(&CPU), 1);
+	ASSERT_EQ(inx(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.SP, 0x8001);
-	ASSERT_EQ(dcx(&CPU), 1);
+	ASSERT_EQ(dcx(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.SP, 0x8000);
 }
 
@@ -399,13 +399,13 @@ TEST_F(Intel8080FixtureTests, XCHG_XTHL_SPHL_InstructionsTest) {
 	SetWORDInMemory(0x9876, CPU.SP);
 
 	// check
-	ASSERT_EQ(xchg(&CPU), 1);
+	ASSERT_EQ(xchg(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.HL, 0xABCD);
 	ASSERT_EQ(CPU.DE, 0x1234);
-	ASSERT_EQ(xthl(&CPU), 1);
+	ASSERT_EQ(xthl(&CPU), MAKERESULT(1, 18));
 	ASSERT_EQ(CPU.HL, 0x9876);
 	ASSERT_EQ(GetWORDFromMemory(CPU.SP), 0xABCD);
-	ASSERT_EQ(sphl(&CPU), 1);
+	ASSERT_EQ(sphl(&CPU), MAKERESULT(1, 5));
 	ASSERT_EQ(CPU.SP, 0x9876);
 }
 
@@ -415,7 +415,7 @@ TEST_F(Intel8080FixtureTests, LXI_InstructionTest) {
 	SetWORDInMemory(0xABCD, CPU.PC + 1); // immediate
 
 	// check
-	ASSERT_EQ(lxi(&CPU), 3);
+	ASSERT_EQ(lxi(&CPU), MAKERESULT(3, 10));
 	ASSERT_EQ(CPU.BC, 0xABCD);
 
 	// then check
@@ -430,7 +430,7 @@ TEST_F(Intel8080FixtureTests, MVI_InstructionTest) {
 	CPU.MEM[CPU.PC + 1] = 0x97; // immediate
 
 	// check
-	ASSERT_EQ(mvi(&CPU), 2);
+	ASSERT_EQ(mvi(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.E, 0x97);
 
 	// then check
@@ -444,10 +444,10 @@ TEST_F(Intel8080FixtureTests, ADI_ACI_InstructionsTest) {
 	CPU.MEM[CPU.PC + 1] = 0xAC; // immediate
 
 	// check
-	ASSERT_EQ(adi(&CPU), 2);
+	ASSERT_EQ(adi(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0xAC);
 	ASSERT_EQ(CPU.F, 0b10000110);
-	ASSERT_EQ(aci(&CPU), 2);
+	ASSERT_EQ(aci(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x58);
 	ASSERT_EQ(CPU.F, 0b00010011);
 
@@ -462,13 +462,13 @@ TEST_F(Intel8080FixtureTests, SUI_SBI_CPI_InstructionsTest) {
 	CPU.MEM[CPU.PC + 1] = 0xD1; // immediate
 
 	// check when carry is set
-	ASSERT_EQ(cpi(&CPU), 2);
+	ASSERT_EQ(cpi(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x00);
 	ASSERT_EQ(CPU.F, 0b00000011);
-	ASSERT_EQ(sui(&CPU), 2);
+	ASSERT_EQ(sui(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x2F);
 	ASSERT_EQ(CPU.F, 0b00000011);
-	ASSERT_EQ(sbi(&CPU), 2);
+	ASSERT_EQ(sbi(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x5D);
 	ASSERT_EQ(CPU.F, 0b00010011);
 
@@ -485,15 +485,15 @@ TEST_F(Intel8080FixtureTests, ANI_XRI_ORI_InstructionsTest) {
 	CPU.A = 0xBD;
 
 	// then check
-	ASSERT_EQ(ani(&CPU), 2);
+	ASSERT_EQ(ani(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x25);
 	ASSERT_EQ(CPU.F, 0b00010010);
 
-	ASSERT_EQ(xri(&CPU), 2);
+	ASSERT_EQ(xri(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x42);
 	ASSERT_EQ(CPU.F, 0b00000110);
 
-	ASSERT_EQ(ori(&CPU), 2);
+	ASSERT_EQ(ori(&CPU), MAKERESULT(2, 7));
 	ASSERT_EQ(CPU.A, 0x67);
 	ASSERT_EQ(CPU.F, 0b00000010);
 }
@@ -504,14 +504,14 @@ TEST_F(Intel8080FixtureTests, STA_LDA_InstructionsTest) {
 	CPU.A = 0x34;
 
 	// check
-	ASSERT_EQ(sta(&CPU), 3);
+	ASSERT_EQ(sta(&CPU), MAKERESULT(3, 13));
 	ASSERT_EQ(CPU.MEM[0xA7B3], 0x34);
 	
 	// then
 	CPU.A = 0;
 
 	// check
-	ASSERT_EQ(lda(&CPU), 3);
+	ASSERT_EQ(lda(&CPU), MAKERESULT(3, 13));
 	ASSERT_EQ(CPU.A, 0x34);
 }
 
@@ -521,14 +521,14 @@ TEST_F(Intel8080FixtureTests, SHLD_LHLD_InstructionsTest) {
 	CPU.HL = 0x1234;
 
 	// check
-	ASSERT_EQ(shld(&CPU), 3);
+	ASSERT_EQ(shld(&CPU), MAKERESULT(3, 16));
 	ASSERT_EQ(GetWORDFromMemory(0xB3C3), 0x1234);
 
 	// then
 	CPU.HL = 0;
 
 	// check
-	ASSERT_EQ(lhld(&CPU), 3);
+	ASSERT_EQ(lhld(&CPU), MAKERESULT(3, 16));
 	ASSERT_EQ(CPU.HL, 0x1234);
 }
 
@@ -537,7 +537,7 @@ TEST_F(Intel8080FixtureTests, PCHL_InstructionTest) {
 	CPU.HL = 0x1234;
 
 	// check
-	ASSERT_EQ(pchl(&CPU), 0);
+	ASSERT_EQ(pchl(&CPU), MAKERESULT(0, 5));
 	ASSERT_EQ(CPU.PC, 0x1234);
 }
 
@@ -548,7 +548,7 @@ TEST_F(Intel8080FixtureTests, Jump_InstructionsTest) {
 	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 	
 	// then
-	CPU.PC += jmp(&CPU);
+	CPU.PC += GETINSTRUCTIONBYTES(jmp(&CPU));
 
 	// check
 	ASSERT_EQ(CPU.PC, 0x1234);
@@ -560,10 +560,10 @@ TEST_F(Intel8080FixtureTests, Jump_InstructionsTest) {
 		CPU.F = 0;
 
 		// then check for unset flag
-		CPU.PC += jump_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(jump_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, 0x0003);
 		CPU.PC = 0;
-		CPU.PC += jump_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(jump_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 
 		// set proper flag
@@ -576,10 +576,10 @@ TEST_F(Intel8080FixtureTests, Jump_InstructionsTest) {
 
 		// then check for set flag
 		CPU.PC = 0;
-		CPU.PC += jump_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(jump_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 		CPU.PC = 0;
-		CPU.PC += jump_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(jump_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, 0x0003);
 	}
 }
@@ -593,7 +593,7 @@ TEST_F(Intel8080FixtureTests, CallSubroutine_InstructionsTest) {
 	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 
 	// then
-	CPU.PC += call(&CPU);
+	CPU.PC += GETINSTRUCTIONBYTES(call(&CPU));
 
 	// check
 	ASSERT_EQ(CPU.PC, 0x1234);
@@ -606,10 +606,10 @@ TEST_F(Intel8080FixtureTests, CallSubroutine_InstructionsTest) {
 		CPU.F = 0;
 
 		// then check for unset flag
-		CPU.PC += call_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(call_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, next_inst_addr);
 		CPU.PC = 0x5678;
-		CPU.PC += call_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(call_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 		ASSERT_EQ(GetWORDFromMemory(CPU.SP), next_inst_addr);
 
@@ -623,11 +623,11 @@ TEST_F(Intel8080FixtureTests, CallSubroutine_InstructionsTest) {
 
 		// then check for set flag
 		CPU.PC = 0x5678;
-		CPU.PC += call_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(call_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 		ASSERT_EQ(GetWORDFromMemory(CPU.SP), next_inst_addr);
 		CPU.PC = 0x5678;
-		CPU.PC += call_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(call_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, next_inst_addr);
 	}
 }
@@ -640,7 +640,7 @@ TEST_F(Intel8080FixtureTests, ReturnFromSubroutine_InstructionsTest) {
 	const char* cc_name[4] = { "CARRY", "ZERO", "SIGN", "PARITY" };
 
 	// then
-	CPU.PC += ret(&CPU);
+	CPU.PC += GETINSTRUCTIONBYTES(ret(&CPU));
 
 	// check
 	ASSERT_EQ(CPU.PC, 0x1234);
@@ -653,11 +653,11 @@ TEST_F(Intel8080FixtureTests, ReturnFromSubroutine_InstructionsTest) {
 		CPU.F = 0;
 
 		// then check for unset flag
-		CPU.PC += return_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(return_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, 0x0001);
 		CPU.PC = 0;
 		SetWORDInMemory(0x1234, CPU.SP);
-		CPU.PC += return_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(return_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 
 		// set proper flag
@@ -671,11 +671,11 @@ TEST_F(Intel8080FixtureTests, ReturnFromSubroutine_InstructionsTest) {
 		// then check for set flag
 		CPU.PC = 0;
 		SetWORDInMemory(0x1234, CPU.SP);
-		CPU.PC += return_cc[i * 2](&CPU); // flag
+		CPU.PC += GETINSTRUCTIONBYTES(return_cc[i * 2](&CPU)); // flag
 		ASSERT_EQ(CPU.PC, 0x1234);
 		CPU.PC = 0;
 		SetWORDInMemory(0x1234, CPU.SP);
-		CPU.PC += return_cc[i * 2 + 1](&CPU); // not flag
+		CPU.PC += GETINSTRUCTIONBYTES(return_cc[i * 2 + 1](&CPU)); // not flag
 		ASSERT_EQ(CPU.PC, 0x0001);
 	}
 }
@@ -685,7 +685,7 @@ TEST_F(Intel8080FixtureTests, RST_InstructionTest) {
 	CPU.MEM[CPU.PC] = 0b11000111; // RST 0
 
 	// check
-	ASSERT_EQ(rst(&CPU), 0);
+	ASSERT_EQ(rst(&CPU), MAKERESULT(0, 11));
 	ASSERT_EQ(CPU.PC, 0x0000);
 	ASSERT_EQ(CPU.SP, 0xFFFE);
 	ASSERT_EQ(GetWORDFromMemory(CPU.SP), 0x0001);
@@ -693,14 +693,14 @@ TEST_F(Intel8080FixtureTests, RST_InstructionTest) {
 
 TEST_F(Intel8080FixtureTests, EI_DI_InstructionTest) {
 	// check
-	ASSERT_EQ(ei(&CPU), 1);
+	ASSERT_EQ(ei(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.INT, 1);
-	ASSERT_EQ(di(&CPU), 1);
+	ASSERT_EQ(di(&CPU), MAKERESULT(1, 4));
 	ASSERT_EQ(CPU.INT, 0);
 }
 
 TEST_F(Intel8080FixtureTests, HLT_InstructionTest) {
 	// check
-	ASSERT_EQ(hlt(&CPU), 1);
+	ASSERT_EQ(hlt(&CPU), MAKERESULT(1, 7));
 	ASSERT_EQ(CPU.HALT, 1);
 }
