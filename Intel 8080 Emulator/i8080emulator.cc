@@ -3,43 +3,9 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "i8080emulator.h"
 #include "bdos.h"
 #include "system.h"
-
-const INSTRUCTION OPCODE_TABLE[256] = {
-	nop, lxi,  stax, inx,  inr, dcr,  mvi, rlc, // 0x00 - 0x07
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
-	nop, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rar, // 0x18 - 0x1F
-	nop, lxi,  shld, inx,  inr, dcr,  mvi, daa, // 0x20 - 0x27
-	nop, dad,  lhld, dcx,  inr, dcr,  mvi, cma, // 0x28 - 0x2F
-	nop, lxi,  sta,  inx,  inr, dcr,  mvi, stc, // 0x30 - 0x37
-	nop, dad,  lda,  dcx,  inr, dcr,  mvi, cmc, // 0x38 - 0x3F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x40 - 0x47
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x48 - 0x4F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x50 - 0x57
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x58 - 0x5F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x60 - 0x67
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x68 - 0x6F
-	mov, mov,  mov,  mov,  mov, mov,  hlt, mov, // 0x70 - 0x77
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x78 - 0x7F
-	add, add,  add,  add,  add, add,  add, add, // 0x80 - 0x87
-	adc, adc,  adc,  adc,  adc, adc,  adc, adc, // 0x88 - 0x8F
-	sub, sub,  sub,  sub,  sub, sub,  sub, sub, // 0x90 - 0x97
-	sbb, sbb,  sbb,  sbb,  sbb, sbb,  sbb, sbb, // 0x98 - 0x9F
-	ana, ana,  ana,  ana,  ana, ana,  ana, ana, // 0xA0 - 0xA7
-	xra, xra,  xra,  xra,  xra, xra,  xra, xra, // 0xA8 - 0xAF
-	ora, ora,  ora,  ora,  ora, ora,  ora, ora, // 0xB0 - 0xB7
-	cmp, cmp,  cmp,  cmp,  cmp, cmp,  cmp, cmp, // 0xB8 - 0xBF
-	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
-	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
-	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
-	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
-	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
-	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
-	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
-	rm,  sphl, jm,   ei,   cm,  nop,  cpi, rst  // 0xF8 - 0xFF
-};
 
 int i8080_initialize(
 	INTEL_8080* i8080,
@@ -92,8 +58,8 @@ int interrupt(
 ) {
 	assert(vector >= 0 && vector <= 7);
 	i8080->INT_PENDING = SET;
-	i8080->INT_VECTOR = 0xC7 + 8 * vector;
-	return i8080->INT;
+	i8080->INT_VECTOR = vector * 8;
+	return i8080->INT_ENABLE;
 }
 
 void write_memory(
@@ -131,24 +97,27 @@ int write_file_to_memory(
 int emulate(
 	INTEL_8080* i8080,
 	uint8_t bdos,
-	DBG_CONSOLE* screen
+	DBG_CONSOLE* screen,
+	CLK clock
 ) {
 	if (bdos) {
 		i8080->MEM[0x0005] = 0xC9; // ret at bdos syscall
 		i8080->MEM[0x0000] = 0x76; // hlt at 0x0000
 	}
 	uint16_t result = 0;
+	uint32_t tmp_cycles = 0;
+	uint32_t cycles = 0;
+	uint32_t periods_to_sleep = 0;
 	while (1) {
-		if (i8080->INT && i8080->INT_PENDING) {
+		if (i8080->INT_ENABLE && i8080->INT_PENDING) {
 			i8080->SP -= 2;
-			write_uint16_t_on_stack(i8080, i8080->PC);
-			i8080->PC = i8080->INT_PENDING << 3;
-			i8080->INT = 0;
-			i8080->INT_PENDING = 0;
-			i8080->HALT = 0;
+			write_uint16_t_on_stack(i8080, i8080->PC); // PUSH PC
+			i8080->PC = i8080->INT_VECTOR; // JMP <vector>
+			i8080->INT_ENABLE = RESET;
+			i8080->INT_PENDING = RESET;
+			i8080->HALT = RESET;
 			add_to_history(screen, i8080->PC);
-			result = i8080->INSTRUCTIONS[i8080->INT_VECTOR](i8080);
-			i8080->CYCLES += GETINSTRUCTIONCYCLES(result);
+			i8080->CYCLES += 11 + CLK_MORE;
 			i8080->INT_VECTOR = 0;
 		}
 		else if (!i8080->HALT) {
@@ -159,7 +128,15 @@ int emulate(
 			add_to_history(screen, i8080->PC);
 			result = i8080->INSTRUCTIONS[i8080->MEM[i8080->PC]](i8080);
 			i8080->PC += GETINSTRUCTIONBYTES(result);
-			i8080->CYCLES += GETINSTRUCTIONCYCLES(result);
+			tmp_cycles = GETINSTRUCTIONCYCLES(result);
+			i8080->CYCLES += tmp_cycles;
+			cycles = (cycles + tmp_cycles) % 100;
+			if (cycles < tmp_cycles)
+				periods_to_sleep++;
+		}
+		if (periods_to_sleep == clock) {
+			thread_sleep(10);
+			periods_to_sleep = 0;
 		}
 	}
 	return 0;
@@ -193,7 +170,7 @@ int process_args(
 			return 1;
 		}
 	}
-	if (!filename)
+	if (!(*filename))
 		return 1;
 	return 0;
 }
@@ -258,9 +235,9 @@ int main(int argc, char** argv) {
 	}
 	
 	if (is_debug)
-		emulate(&i8080, is_bdos, &screen);
+		emulate(&i8080, is_bdos, &screen, CLK_INF);
 	else
-		emulate(&i8080, is_bdos, NULL);
+		emulate(&i8080, is_bdos, NULL, CLK_INF);
 
 	if (is_input)
 		thread_destroy(input_thread);

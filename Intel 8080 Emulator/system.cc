@@ -1,4 +1,5 @@
 #include "system.h"
+#include <locale.h>
 #ifdef _WIN32
 
 THREAD thread_create(void* (*worker)(void*), void* args) {
@@ -16,9 +17,34 @@ void thread_destroy(THREAD thread) {
 	CloseHandle(thread);
 }
 
+void thread_sleep(uint32_t milliseconds) {
+	Sleep(milliseconds);
+}
+
 void initialize_keys() {}
 
 void cleanup_keys() {}
+
+void initialize_screen() {
+	setlocale(LC_ALL, "pl_PL.UTF-8");
+	HANDLE hstdout = NULL;
+	CONSOLE_CURSOR_INFO info = { 0 };
+
+	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleCursorInfo(hstdout, &info);
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(hstdout, &info);
+}
+
+void cleanup_screen() {
+	HANDLE hstdout = NULL;
+	CONSOLE_CURSOR_INFO info = { 0 };
+
+	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleCursorInfo(hstdout, &info);
+	info.bVisible = TRUE;
+	SetConsoleCursorInfo(hstdout, &info);
+}
 
 #else
 
@@ -41,5 +67,11 @@ void initialize_keys() {
 void cleanup_keys() {
 	endwin();
 }
+
+void thread_sleep(uint32_t milliseconds) {
+	msleep(milliseconds);
+}
+
+void initialize_screen() {}
 
 #endif

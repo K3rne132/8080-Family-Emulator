@@ -524,12 +524,12 @@ uint16_t rst(INTEL_8080* i8080) {
 }
 
 uint16_t ei(INTEL_8080* i8080) {
-	i8080->INT = SET;
+	i8080->INT_ENABLE = SET;
 	return MAKERESULT(1, 4);
 }
 
 uint16_t di(INTEL_8080* i8080) {
-	i8080->INT = RESET;
+	i8080->INT_ENABLE = RESET;
 	return MAKERESULT(1, 4);
 }
 

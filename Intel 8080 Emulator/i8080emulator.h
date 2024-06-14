@@ -4,6 +4,14 @@
 #include "i8080.h"
 #include "debug_console.h"
 
+typedef enum _CLK {
+	CLK_INF = UINT32_MAX,
+	CLK_8MHZ = 8000,
+	CLK_1MHZ = 1000,
+	CLK_100KHZ = 100,
+	CLK_1KHZ = 1,
+} CLK;
+
 int i8080_initialize(
 	INTEL_8080* i8080,
 	const uint16_t origin_pc,
@@ -45,7 +53,8 @@ int write_file_to_memory(
 int emulate(
 	INTEL_8080* i8080,
 	uint8_t bdos,
-	DBG_CONSOLE* screen
+	DBG_CONSOLE* screen,
+	CLK clock
 );
 
 int process_args(
