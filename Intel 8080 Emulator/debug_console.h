@@ -1,6 +1,10 @@
 #pragma once
 #include <inttypes.h>
+#ifdef E_I8080
 #include "i8080.h"
+#elif defined E_I8085
+#include "../Intel 8085 Emulator/i8085.h"
+#endif
 
 #define MAX_FORMAT_WIDTH  1024
 #define MAX_FORMAT_HEIGHT 32

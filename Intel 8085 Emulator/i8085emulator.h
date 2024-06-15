@@ -20,3 +20,11 @@ int intr(
 	INTEL_8085* i8085,
 	uint16_t address
 );
+
+void set_serial_in(
+	INTEL_8085* i8085
+);
+
+void reset_serial_in(
+	INTEL_8085* i8085
+);

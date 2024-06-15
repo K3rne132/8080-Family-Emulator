@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="share">
+      <UniqueIdentifier>{0c798fa6-4415-4719-85c4-28baafa18032}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="i8085.h">
@@ -21,9 +24,42 @@
     <ClInclude Include="i8085emulator.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="..\Intel 8080 Emulator\bdos.h">
+      <Filter>share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Intel 8080 Emulator\debug_console.h">
+      <Filter>share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Intel 8080 Emulator\i8080.h">
+      <Filter>share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Intel 8080 Emulator\i8080emulator.h">
+      <Filter>share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Intel 8080 Emulator\system.h">
+      <Filter>share</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="i8085emulator.cc">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Intel 8080 Emulator\bdos.cc">
+      <Filter>share</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Intel 8080 Emulator\debug_console.cc">
+      <Filter>share</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Intel 8080 Emulator\i8080.cc">
+      <Filter>share</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Intel 8080 Emulator\i8080emulator.cc">
+      <Filter>share</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Intel 8080 Emulator\system.cc">
+      <Filter>share</Filter>
+    </ClCompile>
+    <ClCompile Include="i8085.cc">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>

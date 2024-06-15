@@ -110,16 +110,21 @@ int emulate(
 	uint32_t periods_to_sleep = 0;
 	while (1) {
 		if (i8080->INT_ENABLE && i8080->INT_PENDING) {
-			i8080->SP -= 2;
-			write_uint16_t_on_stack(i8080, i8080->PC); // PUSH PC
-			i8080->PC = i8080->INT_VECTOR; // JMP <vector>
+			reset(i8080, screen);
 			i8080->INT_ENABLE = RESET;
 			i8080->INT_PENDING = RESET;
-			i8080->HALT = RESET;
-			add_to_history(screen, i8080->PC);
-			i8080->CYCLES += 11 + CLK_MORE;
-			i8080->INT_VECTOR = 0;
 		}
+#ifdef E_I8085
+		else if (((INTEL_8085*)i8080)->TRAP) {
+			reset(i8080, screen);
+			((INTEL_8085*)i8080)->TRAP = RESET;
+		}
+		else if (i8080->INT_ENABLE && ((INTEL_8085*)i8080)->RIM.PENDING) {
+			reset(i8080, screen);
+			i8080->INT_ENABLE = RESET;
+			((INTEL_8085*)i8080)->RIM.PENDING = RESET;
+		}
+#endif
 		else if (!i8080->HALT) {
 			if (i8080->STEPPING)
 				i8080->HALT = SET;
@@ -175,20 +180,39 @@ int process_args(
 	return 0;
 }
 
+void print_help(
+	const char* program
+) {
+	fprintf(stderr, "Usage: %s <options> --file=<filename>\n"
+		"Available options:\n"
+		"    --debug         Turns on debug console\n"
+		"    --input         Turns on special input handler\n"
+		"    --bdos          Turns on simple bdos calls at 0x0005\n"
+		"    --file=<file>   Selects file to write in memory at 0x0100\n"
+		"    --help=<file>   Displays this help page\n",
+		program);
+}
+
+void reset(
+	INTEL_8080* i8080,
+	DBG_CONSOLE* screen
+) {
+	i8080->SP -= 2;
+	write_uint16_t_on_stack(i8080, i8080->PC); // PUSH PC
+	i8080->PC = i8080->INT_VECTOR; // JMP <vector>
+	add_to_history(screen, i8080->PC);
+	i8080->CYCLES += (uint64_t)11 + CLK_MORE;
+	i8080->HALT = RESET;
+}
+
+#ifdef E_I8080
 int main(int argc, char** argv) {
 	int is_input = 0;
 	int is_debug = 0;
 	int is_bdos = 0;
 	char* filename = NULL;
 	if (process_args(argc, argv, &is_input, &is_debug, &is_bdos, &filename)) {
-		fprintf(stderr, "Usage: %s <options> --file=<filename>\n"
-			"Available options:\n"
-			"    --debug         Turns on debug console\n"
-			"    --input         Turns on special input handler\n"
-			"    --bdos          Turns on simple bdos calls at 0x0005\n"
-			"    --file=<file>   Selects file to write in memory at 0x0100\n"
-			"    --help=<file>   Displays this help page\n",
-			argv[0]);
+		print_help(argv[0]);
 		return 1;
 	}
 
@@ -247,3 +271,4 @@ int main(int argc, char** argv) {
 	}
 	i8080_destroy(&i8080);
 }
+#endif

@@ -1,6 +1,4 @@
 #pragma once
-#define _CRT_SECURE_NO_DEPRECATE
-
 #include "i8080.h"
 #include "debug_console.h"
 
@@ -64,4 +62,13 @@ int process_args(
 	int* debug,
 	int* bdos,
 	char** filename
+);
+
+void print_help(
+	const char* program
+);
+
+void reset(
+	INTEL_8080* i8080,
+	DBG_CONSOLE* screen
 );

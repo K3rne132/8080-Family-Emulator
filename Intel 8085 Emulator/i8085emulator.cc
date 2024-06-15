@@ -13,7 +13,7 @@ int i8085_initialize(
 	const uint16_t origin_pc,
 	const uint16_t origin_sp
 ) {
-	i8080_initialize((INTEL_8080*)i8085, origin_pc, origin_sp);
+	return i8080_initialize((INTEL_8080*)i8085, origin_pc, origin_sp);
 }
 
 void i8085_destroy(
@@ -26,7 +26,22 @@ int hardware_interrupt(
 	INTEL_8085* i8085,
 	HARDWARE_INTERRUPT interrupt
 ) {
-	i8085->CORE.INT_PENDING = SET;
+	if (TRAP)
+		i8085->TRAP = SET;
+	switch (interrupt) {
+	case RST_75:
+		if (!i8085->RIM.M75)
+			i8085->RIM.P75 = SET;
+		break;
+	case RST_65:
+		if (!i8085->RIM.M65)
+			i8085->RIM.P65 = SET;
+		break;
+	case RST_55:
+		if (!i8085->RIM.M55)
+			i8085->RIM.P55 = SET;
+		break;
+	}
 	i8085->CORE.INT_VECTOR = interrupt;
 	return i8085->CORE.INT_ENABLE;
 }
@@ -40,39 +55,45 @@ int intr(
 	return i8085->CORE.INT_ENABLE;
 }
 
+void set_serial_in(
+	INTEL_8085* i8085
+) {
+	i8085->SERIAL_IN = SET;
+}
+
+void reset_serial_in(
+	INTEL_8085* i8085
+) {
+	i8085->SERIAL_IN = RESET;
+}
+
+#ifdef E_I8085
 int main(int argc, char** argv) {
 	int is_input = 0;
 	int is_debug = 0;
 	int is_bdos = 0;
 	char* filename = NULL;
 	if (process_args(argc, argv, &is_input, &is_debug, &is_bdos, &filename)) {
-		fprintf(stderr, "Usage: %s <options> --file=<filename>\n"
-			"Available options:\n"
-			"    --debug         Turns on debug console\n"
-			"    --input         Turns on special input handler\n"
-			"    --bdos          Turns on simple bdos calls at 0x0005\n"
-			"    --file=<file>   Selects file to write in memory at 0x0100\n"
-			"    --help=<file>   Displays this help page\n",
-			argv[0]);
+		print_help(argv[0]);
 		return 1;
 	}
-
+	
 	INTEL_8085 i8085;
 	if (i8085_initialize(&i8085, 0x0100, 0x0000)) {
 		fprintf(stderr, "Could not initialize INTEL_8080 structure\n");
 		return 1;
 	}
-
+	
 	if (write_file_to_memory((INTEL_8080*)&i8085, filename, 0x0100)) {
 		fprintf(stderr, "Error while reading file %s\n", filename);
 		return 1;
 	}
-
+	
 	DBG_CONSOLE screen;
 	THREAD drawing_thread = NULL;
 	THREAD input_thread = NULL;
 	DRAW_SCR_ARGS args = { NULL, (INTEL_8080*)&i8085 };
-
+	
 	if (is_debug) {
 		if (screen_initialize(&screen)) {
 			fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
@@ -83,14 +104,14 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 		args.screen = &screen;
-
+	
 		drawing_thread = thread_create((void* (*)(void*))draw_screen, &args);
 		if (!drawing_thread) {
 			fprintf(stderr, "Starting drawing thread failed\n");
 			return 1;
 		}
 	}
-
+	
 	if (is_input) {
 		input_thread = thread_create((void* (*)(void*))process_input, &args);
 		if (!input_thread) {
@@ -98,12 +119,12 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 	}
-
+	
 	if (is_debug)
 		emulate((INTEL_8080*)&i8085, is_bdos, &screen, CLK_INF);
 	else
 		emulate((INTEL_8080*)&i8085, is_bdos, NULL, CLK_INF);
-
+	
 	if (is_input)
 		thread_destroy(input_thread);
 	if (is_debug) {
@@ -112,3 +133,4 @@ int main(int argc, char** argv) {
 	}
 	i8085_destroy(&i8085);
 }
+#endif

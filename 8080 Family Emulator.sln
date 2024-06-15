@@ -11,6 +11,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "8080 Family Tests", "8080 F
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Intel 8085 Emulator", "Intel 8085 Emulator\Intel 8085 Emulator.vcxproj", "{058D7110-CBF5-40A7-8FBB-689C40740C69}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DF4B694-758C-4BD7-A7A3-870A1E85154D} = {9DF4B694-758C-4BD7-A7A3-870A1E85154D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

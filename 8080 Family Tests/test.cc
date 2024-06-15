@@ -694,9 +694,9 @@ TEST_F(Intel8080FixtureTests, RST_InstructionTest) {
 TEST_F(Intel8080FixtureTests, EI_DI_InstructionTest) {
 	// check
 	ASSERT_EQ(ei(&CPU), MAKERESULT(1, 4));
-	ASSERT_EQ(CPU.INT, 1);
+	ASSERT_EQ(CPU.INT_ENABLE, 1);
 	ASSERT_EQ(di(&CPU), MAKERESULT(1, 4));
-	ASSERT_EQ(CPU.INT, 0);
+	ASSERT_EQ(CPU.INT_ENABLE, 0);
 }
 
 TEST_F(Intel8080FixtureTests, HLT_InstructionTest) {

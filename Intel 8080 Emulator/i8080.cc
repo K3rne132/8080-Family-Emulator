@@ -3,7 +3,7 @@
 #include "i8080.h"
 
 // returns a current opcode at address of program counter
-static uint8_t opcode(const INTEL_8080* i8080) {
+uint8_t opcode(const INTEL_8080* i8080) {
 	return i8080->MEM[i8080->PC];
 }
 
@@ -23,12 +23,12 @@ static uint8_t opcode_bits(
 }
 
 // returns a current uint8_t argument at address of program counter + 1
-static uint8_t uint8_t_arg(const INTEL_8080* i8080) {
+uint8_t uint8_t_arg(const INTEL_8080* i8080) {
 	return i8080->MEM[i8080->PC + 1];
 }
 
 // returns a current uint16_t argument at address of program counter + 1
-static uint16_t uint16_t_arg(const INTEL_8080* i8080) {
+uint16_t uint16_t_arg(const INTEL_8080* i8080) {
 	uint16_t result = i8080->MEM[i8080->PC + 2] << 8;
 	result |= i8080->MEM[i8080->PC + 1];
 	return result;

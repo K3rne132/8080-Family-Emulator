@@ -1,7 +1,5 @@
 #pragma once
-#ifndef EMULATOR
-#define EMULATOR
-#define I8080
+#ifdef E_I8080
 #define CLK_MORE 0
 #define CLK_LESS 0
 #endif
@@ -49,7 +47,7 @@ typedef uint16_t(*INSTRUCTION)(_INTEL_8080* i8080);
 
 
 
-#pragma pack(push, 1) // pad to 1 uint8_t
+#pragma pack(push, 1)
 
 /* Flags (Status) Register
 |-------------------------------|
@@ -62,11 +60,19 @@ typedef uint16_t(*INSTRUCTION)(_INTEL_8080* i8080);
 
 typedef struct _status {
 	uint8_t C  : 1; // Carry (C) Flag Bit
+#ifndef E_I8085
 	uint8_t    : 1; // Reserved (1)
+#else
+	uint8_t U  : 1; // Underflow Indicator (UI) Flag Bit
+#endif
 	uint8_t P  : 1; // Parity (P) Flag Bit
 	uint8_t    : 1; // Reserved (0)
 	uint8_t AC : 1; // Auxiliary Carry (AC) Flag Bit
+#ifndef E_I8085
 	uint8_t    : 1; // Reserved (0)
+#else
+	uint8_t V  : 1; // Overflow Flag Bit
+#endif
 	uint8_t Z  : 1; // Zero (Z) Flag Bit
 	uint8_t S  : 1; // Sign (S) Flag Bit
 } STATUS;
@@ -128,10 +134,10 @@ typedef struct _INTEL_8080 {
 		};
 	};
 
+	uint16_t INT_VECTOR; // address of routine to execute
 	uint8_t HALT; // is CPU halted
 	uint8_t INT_ENABLE; // has CPU enabled interrupts
 	uint8_t INT_PENDING; // has CPU pending interrupt
-	uint8_t INT_VECTOR; // address of routine to execute
 
 } INTEL_8080;
 
@@ -139,6 +145,9 @@ typedef struct _INTEL_8080 {
 
 // HELPERS
 
+uint8_t uint8_t_arg(const INTEL_8080* i8080);
+uint16_t uint16_t_arg(const INTEL_8080* i8080);
+uint8_t opcode(const INTEL_8080* i8080);
 void write_uint16_t_on_stack(INTEL_8080* i8080, uint16_t uint16_t);
 uint16_t read_uint16_t_from_stack(INTEL_8080* i8080);
 
@@ -235,7 +244,7 @@ uint16_t in(INTEL_8080* i8080);
 uint16_t out(INTEL_8080* i8080);
 uint16_t hlt(INTEL_8080* i8080);
 
-#ifdef I8080
+#ifdef E_I8080
 static const char* OPCODE_NAME[256] = {
 	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
 	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
