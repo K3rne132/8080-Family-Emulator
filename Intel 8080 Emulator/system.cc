@@ -14,6 +14,7 @@ THREAD thread_create(void* (*worker)(void*), void* args) {
 }
 
 void thread_destroy(THREAD thread) {
+	TerminateThread(thread, 0);
 	CloseHandle(thread);
 }
 

@@ -162,6 +162,9 @@
     <ClCompile Include="i8085.cc" />
     <ClCompile Include="i8085emulator.cc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="intel8085.cpf" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

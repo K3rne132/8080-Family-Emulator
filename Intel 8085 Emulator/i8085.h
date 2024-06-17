@@ -1,8 +1,4 @@
 #pragma once
-#ifdef E_I8085
-#define CLK_MORE 0
-#define CLK_LESS 0
-#endif
 #include "i8080.h"
 
 enum HARDWARE_INTERRUPT {
@@ -81,13 +77,13 @@ uint16_t shlx(INTEL_8080* i8080);
 #ifdef E_I8085
 static const char* OPCODE_NAME[256] = {
 	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
-	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
-	"NOP", "LXI D,%hXh", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%hhXh", "RAL", // 0x10 - 0x17
-	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%hhXh", "RAR", // 0x18 - 0x1F
+	"DSUB", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
+	"ARHL", "LXI D,%hXh", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%hhXh", "RAL", // 0x10 - 0x17
+	"RDEL", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%hhXh", "RAR", // 0x18 - 0x1F
 	"RIM", "LXI H,%hXh", "SHLD %hXh", "INX H", "INR H", "DCR H", "MVI H,%hhXh", "DAA", // 0x20 - 0x27
-	"NOP", "DAD H", "LHLD %hXh", "DCX H", "INR L", "DCR L", "MVI L,%hhXh", "CMA", // 0x28 - 0x2F
+	"LDHI L,%hhXh", "DAD H", "LHLD %hXh", "DCX H", "INR L", "DCR L", "MVI L,%hhXh", "CMA", // 0x28 - 0x2F
 	"SIM", "LXI SP,%hXh", "STA %hXh", "INX SP", "INR M", "DCR M", "MVI M,%hhXh", "STC", // 0x30 - 0x37
-	"NOP", "DAD SP", "LDA %hXh", "DCX SP", "INR A", "DCR A", "MVI A,%hhXh", "CMC", // 0x38 - 0x3F
+	"LDSI L,%hhXh", "DAD SP", "LDA %hXh", "DCX SP", "INR A", "DCR A", "MVI A,%hhXh", "CMC", // 0x38 - 0x3F
 	"MOV B,B", "MOV B,C", "MOV B,D", "MOV B,E", "MOV B,H", "MOV B,L", "MOV B,M", "MOV B,A", // 0x40 - 0x47
 	"MOV C,B", "MOV C,C", "MOV C,D", "MOV C,E", "MOV C,H", "MOV C,L", "MOV C,M", "MOV C,A", // 0x48 - 0x4F
 	"MOV D,B", "MOV D,C", "MOV D,D", "MOV D,E", "MOV D,H", "MOV D,L", "MOV D,M", "MOV D,A", // 0x50 - 0x57
@@ -105,20 +101,20 @@ static const char* OPCODE_NAME[256] = {
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", // 0xB0 - 0xB7
 	"CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A", // 0xB8 - 0xBF
 	"RNZ", "POP B", "JNZ %hXh", "JMP %hXh", "CNZ %hXh", "PUSH B", "ADI %hhXh", "RST 0", // 0xC0 - 0xC7
-	"RZ", "RET", "JZ %hXh", "NOP", "CZ %hXh", "CALL %hXh", "ACI %hhXh", "RST 1", // 0xC8 - 0xCF
+	"RZ", "RET", "JZ %hXh", "RSTV", "CZ %hXh", "CALL %hXh", "ACI %hhXh", "RST 1", // 0xC8 - 0xCF
 	"RNC", "POP D", "JNC %hXh", "OUT %hhXh", "CNC %hXh", "PUSH D", "SUI %hhXh", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %hXh", "IN %hhXh", "CC %hXh", "NOP", "SBI %hhXh", "RST 3", // 0xD8 - 0xDF
+	"RC", "SHLX", "JC %hXh", "IN %hhXh", "CC %hXh", "JNUI %hXh", "SBI %hhXh", "RST 3", // 0xD8 - 0xDF
 	"RPO", "POP H", "JPO %hXh", "XTHL", "CPO %hXh", "PUSH H", "ANI %hhXh", "RST 4", // 0xE0 - 0xE7
-	"RPE", "PCHL", "JPE %hXh", "XCHG", "CPE %hXh", "NOP", "XRI %hhXh", "RST 5", // 0xE8 - 0xEF
+	"RPE", "PCHL", "JPE %hXh", "XCHG", "CPE %hXh", "LHLX", "XRI %hhXh", "RST 5", // 0xE8 - 0xEF
 	"RP", "POP PSW", "JP %hXh", "DI", "CP %hXh", "PUSH PSW", "ORI %hhXh", "RST 6", // 0xF0 - 0xF7
-	"RM", "SPHL", "JM %hXh", "EI", "CM %hXh", "NOP", "CPI %hhXh", "RST 7" // 0xF8 - 0xFF
+	"RM", "SPHL", "JM %hXh", "EI", "CM %hXh", "JUI %hXh", "CPI %hhXh", "RST 7" // 0xF8 - 0xFF
 };
 
 static const uint8_t OPCODE_LENGTH[256] = {
 	1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 0x00 - 0x0F
 	1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 0x10 - 0x1F
-	1, 3, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, // 0x20 - 0x2F
-	1, 3, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, // 0x30 - 0x3F
+	1, 3, 3, 1, 1, 1, 2, 1, 2, 1, 3, 1, 1, 1, 2, 1, // 0x20 - 0x2F
+	1, 3, 3, 1, 1, 1, 2, 1, 2, 1, 3, 1, 1, 1, 2, 1, // 0x30 - 0x3F
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40 - 0x4F
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x50 - 0x5F
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60 - 0x6F
@@ -128,20 +124,20 @@ static const uint8_t OPCODE_LENGTH[256] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0xA0 - 0xAF
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0xB0 - 0xBF
 	1, 1, 3, 0, 3, 1, 1, 0, 1, 0, 3, 1, 3, 0, 2, 0, // 0xC0 - 0xCF
-	1, 1, 3, 2, 3, 1, 2, 0, 1, 1, 3, 2, 3, 1, 2, 0, // 0xD0 - 0xDF
+	1, 1, 3, 2, 3, 1, 2, 0, 1, 1, 3, 2, 3, 3, 2, 0, // 0xD0 - 0xDF
 	1, 1, 3, 1, 3, 1, 2, 0, 1, 0, 3, 1, 3, 1, 2, 0, // 0xE0 - 0xEF
-	1, 1, 3, 1, 3, 1, 2, 0, 1, 1, 3, 1, 3, 1, 2, 0  // 0xF0 - 0xFF
+	1, 1, 3, 1, 3, 1, 2, 0, 1, 1, 3, 1, 3, 3, 2, 0  // 0xF0 - 0xFF
 };
 
 static const INSTRUCTION OPCODE_TABLE[256] = {
 	nop, lxi,  stax, inx,  inr, dcr,  mvi, rlc, // 0x00 - 0x07
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
-	nop, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rar, // 0x18 - 0x1F
+	dsub, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
+	arhl, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
+	rdel, dad,  ldax, dcx,  inr, dcr,  mvi, rar, // 0x18 - 0x1F
 	rim, lxi,  shld, inx,  inr, dcr,  mvi, daa, // 0x20 - 0x27
-	nop, dad,  lhld, dcx,  inr, dcr,  mvi, cma, // 0x28 - 0x2F
+	ldhi, dad,  lhld, dcx,  inr, dcr,  mvi, cma, // 0x28 - 0x2F
 	sim, lxi,  sta,  inx,  inr, dcr,  mvi, stc, // 0x30 - 0x37
-	nop, dad,  lda,  dcx,  inr, dcr,  mvi, cmc, // 0x38 - 0x3F
+	ldsi, dad,  lda,  dcx,  inr, dcr,  mvi, cmc, // 0x38 - 0x3F
 	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x40 - 0x47
 	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x48 - 0x4F
 	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x50 - 0x57
@@ -159,12 +155,12 @@ static const INSTRUCTION OPCODE_TABLE[256] = {
 	ora, ora,  ora,  ora,  ora, ora,  ora, ora, // 0xB0 - 0xB7
 	cmp, cmp,  cmp,  cmp,  cmp, cmp,  cmp, cmp, // 0xB8 - 0xBF
 	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
-	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
+	rz,  ret,  jz,   rstv,  cz,  call, aci, rst, // 0xC8 - 0xCF
 	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
-	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
+	rc,  shlx,  jc,   in,   cc,  jnui,  sbi, rst, // 0xD8 - 0xDF
 	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
-	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
+	rpe, pchl, jpe,  xchg, cpe, lhlx,  xri, rst, // 0xE8 - 0xEF
 	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
-	rm,  sphl, jm,   ei,   cm,  nop,  cpi, rst  // 0xF8 - 0xFF
+	rm,  sphl, jm,   ei,   cm,  jui,  cpi, rst  // 0xF8 - 0xFF
 };
 #endif // I8085

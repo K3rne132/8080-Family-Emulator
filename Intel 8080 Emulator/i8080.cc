@@ -98,7 +98,7 @@ uint16_t inr(INTEL_8080* i8080) {
 	carry++;
 	set_ZSP_flags(i8080, carry);
 	i8080->status.AC = ((carry & 0x0F) == 0);
-	return MAKERESULT(1, (reg != REG_M ? 5 : 10));
+	return MAKERESULT(1, (reg != REG_M ? 5 + CLK_LESS : 10));
 }
 
 uint16_t dcr(INTEL_8080* i8080) {
@@ -108,7 +108,7 @@ uint16_t dcr(INTEL_8080* i8080) {
 	carry--;
 	set_ZSP_flags(i8080, carry);
 	i8080->status.AC = !((carry & 0x0F) == 0x0F);
-	return MAKERESULT(1, (reg != REG_M ? 5 : 10));
+	return MAKERESULT(1, (reg != REG_M ? 5 + CLK_LESS : 10));
 }
 
 uint16_t cma(INTEL_8080* i8080) {
@@ -147,7 +147,7 @@ uint16_t mov(INTEL_8080* i8080) {
 		i8080->MEM[i8080->HL] = i8080->REG[le_reg(src)];
 	else
 		assert(NULL);
-	return MAKERESULT(1, ((src == REG_M || dst == REG_M) ? 7 : 5));
+	return MAKERESULT(1, ((src == REG_M || dst == REG_M) ? 7 : 5 + CLK_LESS));
 }
 
 uint16_t stax(INTEL_8080* i8080) {
@@ -281,13 +281,13 @@ uint16_t dad(INTEL_8080* i8080) {
 uint16_t inx(INTEL_8080* i8080) {
 	uint8_t pair = opcode_bits(i8080, 5, 4);
 	(pair != REG_PAIR_SP) ? (i8080->REG_W[pair]++) : (i8080->SP++);
-	return MAKERESULT(1, 5);
+	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
 uint16_t dcx(INTEL_8080* i8080) {
 	uint8_t pair = opcode_bits(i8080, 5, 4);
 	(pair != REG_PAIR_SP) ? (i8080->REG_W[pair]--) : (i8080->SP--);
-	return MAKERESULT(1, 5);
+	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
 uint16_t xchg(INTEL_8080* i8080) {
@@ -408,74 +408,74 @@ uint16_t jmp(INTEL_8080* i8080) {
 }
 
 uint16_t jc(INTEL_8080* i8080) {
-	return i8080->status.C ? jmp(i8080) : MAKERESULT(3, 10);
+	return i8080->status.C ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jnc(INTEL_8080* i8080) {
-	return !i8080->status.C ? jmp(i8080) : MAKERESULT(3, 10);
+	return !i8080->status.C ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jz(INTEL_8080* i8080) {
-	return i8080->status.Z ? jmp(i8080) : MAKERESULT(3, 10);
+	return i8080->status.Z ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jnz(INTEL_8080* i8080) {
-	return !i8080->status.Z ? jmp(i8080) : MAKERESULT(3, 10);
+	return !i8080->status.Z ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jm(INTEL_8080* i8080) {
-	return i8080->status.S ? jmp(i8080) : MAKERESULT(3, 10);
+	return i8080->status.S ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jp(INTEL_8080* i8080) {
-	return !i8080->status.S ? jmp(i8080) : MAKERESULT(3, 10);
+	return !i8080->status.S ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jpe(INTEL_8080* i8080) {
-	return i8080->status.P ? jmp(i8080) : MAKERESULT(3, 10);
+	return i8080->status.P ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t jpo(INTEL_8080* i8080) {
-	return !i8080->status.P ? jmp(i8080) : MAKERESULT(3, 10);
+	return !i8080->status.P ? jmp(i8080) : MAKERESULT(3, 10 + JMP_DIFF);
 }
 
 uint16_t call(INTEL_8080* i8080) {
 	i8080->SP -= 2;
 	write_uint16_t_on_stack(i8080, i8080->PC + 3);
 	jmp(i8080);
-	return MAKERESULT(0, 17);
+	return MAKERESULT(0, 17 + CLK_MORE);
 }
 
 uint16_t cc(INTEL_8080* i8080) {
-	return i8080->status.C ? call(i8080) : MAKERESULT(3, 11);
+	return i8080->status.C ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cnc(INTEL_8080* i8080) {
-	return !i8080->status.C ? call(i8080) : MAKERESULT(3, 11);
+	return !i8080->status.C ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cz(INTEL_8080* i8080) {
-	return i8080->status.Z ? call(i8080) : MAKERESULT(3, 11);
+	return i8080->status.Z ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cnz(INTEL_8080* i8080) {
-	return !i8080->status.Z ? call(i8080) : MAKERESULT(3, 11);
+	return !i8080->status.Z ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cm(INTEL_8080* i8080) {
-	return i8080->status.S ? call(i8080) : MAKERESULT(3, 11);
+	return i8080->status.S ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cp(INTEL_8080* i8080) {
-	return !i8080->status.S ? call(i8080) : MAKERESULT(3, 11);
+	return !i8080->status.S ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cpe(INTEL_8080* i8080) {
-	return i8080->status.P ? call(i8080) : MAKERESULT(3, 11);
+	return i8080->status.P ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t cpo(INTEL_8080* i8080) {
-	return !i8080->status.P ? call(i8080) : MAKERESULT(3, 11);
+	return !i8080->status.P ? call(i8080) : MAKERESULT(3, 11 + CALL_DIFF);
 }
 
 uint16_t ret(INTEL_8080* i8080) {
@@ -485,42 +485,42 @@ uint16_t ret(INTEL_8080* i8080) {
 }
 
 uint16_t rc(INTEL_8080* i8080) {
-	return i8080->status.C ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (i8080->status.C ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rnc(INTEL_8080* i8080) {
-	return !i8080->status.C ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (!i8080->status.C ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rz(INTEL_8080* i8080) {
-	return i8080->status.Z ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (i8080->status.Z ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rnz(INTEL_8080* i8080) {
-	return !i8080->status.Z ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (!i8080->status.Z ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rm(INTEL_8080* i8080) {
-	return i8080->status.S ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (i8080->status.S ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rp(INTEL_8080* i8080) {
-	return !i8080->status.S ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (!i8080->status.S ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rpe(INTEL_8080* i8080) {
-	return i8080->status.P ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (i8080->status.P ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rpo(INTEL_8080* i8080) {
-	return !i8080->status.P ? ret(i8080) + 0x100 : MAKERESULT(1, 5);
+	return (!i8080->status.P ? ret(i8080) : MAKERESULT(1, 4)) + RET_DIFF;
 }
 
 uint16_t rst(INTEL_8080* i8080) {
 	i8080->SP -= 2;
 	write_uint16_t_on_stack(i8080, i8080->PC + 1);
 	i8080->PC = opcode(i8080) & 0b00111000;
-	return MAKERESULT(0, 11);
+	return MAKERESULT(0, 11 + CLK_MORE);
 }
 
 uint16_t ei(INTEL_8080* i8080) {

@@ -230,11 +230,11 @@ void screen_destroy(DBG_CONSOLE* screen) {
 	for (int i = 0; i < MAX_STDOUT_HEIGHT; i++) {
 		free(screen->standard_output[i]);
 	}
-
+	
 	free(screen->screen_format);
 	free(screen->screen_text);
 	free(screen->standard_output);
-
+	
 	free(screen->prev_address);
 	free(screen->next_address);
 	memset(screen, 0, sizeof(DBG_CONSOLE));

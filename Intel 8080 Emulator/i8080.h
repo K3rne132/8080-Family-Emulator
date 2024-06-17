@@ -2,6 +2,15 @@
 #ifdef E_I8080
 #define CLK_MORE 0
 #define CLK_LESS 0
+#define JMP_DIFF 0
+#define CALL_DIFF 0
+#define RET_DIFF 0x100
+#elif defined E_I8085
+#define CLK_MORE 1
+#define CLK_LESS -1
+#define JMP_DIFF -3
+#define CALL_DIFF -2
+#define RET_DIFF 0x200
 #endif
 #include <inttypes.h>
 
@@ -9,7 +18,7 @@
 #define RESET 0
 
 #define SWAPORDER(word) ((uint16_t)(word<<8)|(word>>8))
-#define MAKERESULT(bytes, cycles) ((uint16_t)((cycles<<8)|bytes))
+#define MAKERESULT(bytes, cycles) ((uint16_t)(((cycles)<<8)|(bytes)))
 #define GETINSTRUCTIONBYTES(result) ((uint8_t)(result&0x00FF))
 #define GETINSTRUCTIONCYCLES(result) ((uint8_t)((result&0xFF00)>>8))
 

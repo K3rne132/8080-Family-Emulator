@@ -29,11 +29,7 @@ uint16_t arhl(INTEL_8080* i8080) {
 }
 
 uint16_t dsub(INTEL_8080* i8080) {
-	//uint32_t carry = i8080->HL;
-	//carry += i8080->REG_W[REG_PAIR_BC];
-	//i8080->status.C = carry >> 16;
-	//i8080->HL = carry;
-	//
+	i8080->HL -= i8080->BC;
 	return MAKERESULT(1, 10);
 }
 
@@ -62,6 +58,12 @@ uint16_t lhlx(INTEL_8080* i8080) {
 }
 
 uint16_t rdel(INTEL_8080* i8080) {
+	uint8_t new_carry = i8080->D >> 7;
+	i8080->D <<= 1;
+	i8080->D |= ((i8080->E >> 7) & 1);
+	i8080->E <<= 1;
+	i8080->E |= i8080->status.C;
+	i8080->status.C = new_carry;
 	return MAKERESULT(1, 10);
 }
 

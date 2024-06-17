@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "i8080emulator.h"
 #include "bdos.h"
@@ -108,7 +109,7 @@ int emulate(
 	uint32_t tmp_cycles = 0;
 	uint32_t cycles = 0;
 	uint32_t periods_to_sleep = 0;
-	while (1) {
+	while (_RUNNING) {
 		if (i8080->INT_ENABLE && i8080->INT_PENDING) {
 			reset(i8080, screen);
 			i8080->INT_ENABLE = RESET;
@@ -207,6 +208,7 @@ void reset(
 
 #ifdef E_I8080
 int main(int argc, char** argv) {
+	signal(SIGINT, int_handler);
 	int is_input = 0;
 	int is_debug = 0;
 	int is_bdos = 0;

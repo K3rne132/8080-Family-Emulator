@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "i8085emulator.h"
 #include "i8080emulator.h"
@@ -13,6 +14,7 @@ int i8085_initialize(
 	const uint16_t origin_pc,
 	const uint16_t origin_sp
 ) {
+	memset(i8085, 0, sizeof(INTEL_8085));
 	return i8080_initialize((INTEL_8080*)i8085, origin_pc, origin_sp);
 }
 
@@ -20,6 +22,7 @@ void i8085_destroy(
 	INTEL_8085* i8085
 ) {
 	i8080_destroy((INTEL_8080*)i8085);
+	memset(i8085, 0, sizeof(INTEL_8085));
 }
 
 int hardware_interrupt(
@@ -69,6 +72,7 @@ void reset_serial_in(
 
 #ifdef E_I8085
 int main(int argc, char** argv) {
+	signal(SIGINT, int_handler);
 	int is_input = 0;
 	int is_debug = 0;
 	int is_bdos = 0;
@@ -99,8 +103,8 @@ int main(int argc, char** argv) {
 			fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
 			return 1;
 		}
-		if (read_screen_format(&screen, "intel8080.cpf")) {
-			fprintf(stderr, "Could not read screen format file %s\n", "intel8080.cpf");
+		if (read_screen_format(&screen, "intel8085.cpf")) {
+			fprintf(stderr, "Could not read screen format file %s\n", "intel8085.cpf");
 			return 1;
 		}
 		args.screen = &screen;

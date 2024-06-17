@@ -5,10 +5,18 @@
 typedef enum _CLK {
 	CLK_INF = UINT32_MAX,
 	CLK_8MHZ = 8000,
+	CLK_4MHZ = 4000,
+	CLK_2MHZ = 2000,
 	CLK_1MHZ = 1000,
 	CLK_100KHZ = 100,
 	CLK_1KHZ = 1,
 } CLK;
+
+static volatile int _RUNNING = 1;
+
+static void int_handler(int sig) {
+	_RUNNING = 0;
+}
 
 int i8080_initialize(
 	INTEL_8080* i8080,
