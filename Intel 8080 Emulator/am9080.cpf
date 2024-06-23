@@ -1,0 +1,30 @@
+╔══ AMD 9080 ═════════════╦═ Registers ═════════════════╦═ History ═══════════════╦══ Memory ═════════════════════════╗
+║          __  __ _____   ║ B: BHEX (BDE) C: CHEX (CDE) ║  PROGRAM-5              ║ MEM000:                          ^║
+║    /\   |  \/  |  __ \  ║ D: DHEX (DDE) E: EHEX (EDE) ║  PROGRAM-4              ║ MEM001:                          ▓║
+║   /  \  | \  / | |  | | ║ H: HHEX (HDE) L: LHEX (LDE) ║  PROGRAM-3              ║ MEM002:                          ▓║
+║  / /\ \ | |\/| | |  | | ║ A: AHEX (ADE) F: FHEX (FDE) ║  PROGRAM-2              ║ MEM003:                          ▓║
+║ / ____ \| |  | | |__| | ║ SP: SPHEEX    PC: PCHEEX    ║  PROGRAM-1              ║ MEM004:                          ░║
+║/_/__  \_\_|  |_|_____/  ║                             ╠══ Program ══════════════╣ MEM005:                          ░║
+║ / _ \ / _ \ / _ \ / _ \ ║ Carry Bit:             FC   ║> PROGRAM+0              ║ MEM006:                          ░║
+║| (_) | | | | (_) | | | |║ AuxCarry Bit:          FA   ║  PROGRAM+1              ║ MEM007:                          ░║
+║ \__, | | | |> _ <| | | |║ Sign Bit:              FS   ║  PROGRAM+2              ║ MEM008:                          ░║
+║   / /| |_| | (_) | |_| |║ Zero Bit:              FZ   ║  PROGRAM+3              ║ MEM009:                          ░║
+║  /_/  \___/ \___/ \___/ ║ Parity Bit:            FP   ║  PROGRAM+4              ║ MEM010:                          ░║
+║                         ║ Halt Bit:              FH   ║  PROGRAM+5              ║ MEM011:                          ░║
+║                         ║ Interrupt Bit:         FI   ║  PROGRAM+6              ║ MEM012:                          ░║
+╠═ Standard Output ═══════╩═════════════════════════════╩═════════════════════════╣ MEM013:                          ░║
+║ STDOUT00                                                                        ║ MEM014:                          ░║
+║ STDOUT01                                                                        ║ MEM015:                          ░║
+║ STDOUT02                                                                        ║ MEM016:                          ░║
+║ STDOUT03                                                                        ║ MEM017:                          ░║
+║ STDOUT04                                                                        ║ MEM018:                          ░║
+║ STDOUT05                                                                        ║ MEM019:                          ░║
+║ STDOUT06                                                                        ║ MEM020:                          ░║
+║ STDOUT07                                                                        ║ MEM021:                          ░║
+║ STDOUT08                                                                        ║ MEM022:                          ░║
+║ STDOUT09                                                                        ║ MEM023:                          ░║
+║ STDOUT10                                                                        ║ MEM024:                          ░║
+║ STDOUT11                                                                        ║ MEM025:                          ░║
+║ STDOUT12                                                                        ║ MEM026:                          ░║
+║ STDOUT13                                                                        ║ MEM027:                          v║
+╚═════════════════════════════════════════════════════════════════════════════════╩═══════════════════════════════════╝

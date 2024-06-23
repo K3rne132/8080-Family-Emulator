@@ -141,4 +141,4 @@ const EMUL_STRUCT EMUL_DATA[256] = {
 	{"RM", 1, rm}, {"SPHL", 1, sphl}, {"JM %hXh", 3, jm}, {"EI", 1, ei},
 	{"CM %hXh", 3, cm}, {"JUI %hXh", 3, jui}, {"CPI %hhXh", 2, cpi}, {"RST 7", 1, rst}
 };
-#endif // I8085
+#endif

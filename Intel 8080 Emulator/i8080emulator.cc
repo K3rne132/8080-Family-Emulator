@@ -205,7 +205,7 @@ void reset(
 	i8080->HALT = RESET;
 }
 
-#ifdef E_I8080
+#ifndef E_I8085
 int main(int argc, char** argv) {
 	signal(SIGINT, int_handler);
 	int is_input = 0;
@@ -232,14 +232,20 @@ int main(int argc, char** argv) {
 	THREAD drawing_thread = NULL;
 	THREAD input_thread = NULL;
 	DRAW_SCR_ARGS args = { NULL, &i8080 };
+#ifdef E_AM9080
+	const char* screen_file = "am9080.cpf";
+#else
+	const char* screen_file = "intel8080.cpf";
+#endif
+
 
 	if (is_debug) {
 		if (screen_initialize(&screen)) {
 			fprintf(stderr, "Could not initialize DBG_CONSOLE structure\n");
 			return 1;
 		}
-		if (read_screen_format(&screen, "intel8080.cpf")) {
-			fprintf(stderr, "Could not read screen format file %s\n", "intel8080.cpf");
+		if (read_screen_format(&screen, screen_file)) {
+			fprintf(stderr, "Could not read screen format file %s\n", screen_file);
 			return 1;
 		}
 		args.screen = &screen;

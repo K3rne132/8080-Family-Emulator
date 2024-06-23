@@ -144,7 +144,7 @@ uint16_t mov(INTEL_8080* i8080) {
 		i8080->MEM[i8080->HL] = i8080->REG[le_reg(src)];
 	else
 		assert(NULL);
-	return MAKERESULT(1, ((src == REG_M || dst == REG_M) ? 7 : 5 + CLK_LESS));
+	return MAKERESULT(1, ((src == REG_M || dst == REG_M) ? 7 : 5 + MOV_R_R_DIFF));
 }
 
 uint16_t stax(INTEL_8080* i8080) {
@@ -192,7 +192,11 @@ uint16_t ana(INTEL_8080* i8080) {
 	uint8_t reg = opcode_bits(i8080, 2, 0);
 	uint8_t num = (reg != REG_M) ? (i8080->REG[le_reg(reg)]) : (i8080->MEM[i8080->HL]);
 	i8080->status.C = RESET;
+#ifdef E_AM9080
+	i8080->status.AC = RESET;
+#else
 	i8080->status.AC = (((i8080->A | num) & 0x08) != 0);
+#endif
 	i8080->A &= num;
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
@@ -367,7 +371,11 @@ uint16_t sbi(INTEL_8080* i8080) {
 
 uint16_t ani(INTEL_8080* i8080) {
 	i8080->status.C = RESET;
+#ifdef E_AM9080
+	i8080->status.AC = RESET;
+#else
 	i8080->status.AC = (((i8080->A | uint8_t_arg(i8080)) & 0x08) != 0);
+#endif
 	i8080->A &= uint8_t_arg(i8080);
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);

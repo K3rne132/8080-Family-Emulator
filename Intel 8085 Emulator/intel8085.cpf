@@ -10,10 +10,10 @@
 ║ > _ <| | | |> _ <|___ \ ║ Sign Bit:              FS   ║  PROGRAM+2              ║ MEM008:                          ░║
 ║| (_) | |_| | (_) |___) |║ Zero Bit:              FZ   ║  PROGRAM+3              ║ MEM009:                          ░║
 ║ \___/ \___/ \___/|____/ ║ Parity Bit:            FP   ║  PROGRAM+4              ║ MEM010:                          ░║
-║                         ║ Halt Bit:              FH   ║  PROGRAM+5              ║ MEM011:                          ░║
-║                         ║ Interrupt Bit:         FI   ║  PROGRAM+6              ║ MEM012:                          ░║
-║                         ║ V Bit:                 FV   ║  PROGRAM+7              ║ MEM012:                          ░║
-║                         ║ UI Bit:                FU   ║  PROGRAM+8              ║ MEM012:                          ░║
+║                         ║ Overflow Bit:          FV   ║  PROGRAM+5              ║ MEM011:                          ░║
+║                         ║ Underflow Bit:         FU   ║  PROGRAM+6              ║ MEM012:                          ░║
+║                         ║ Halt Bit:              FH   ║  PROGRAM+7              ║ MEM012:                          ░║
+║                         ║ Interrupt Bit:         FI   ║  PROGRAM+8              ║ MEM012:                          ░║
 ╠═ Standard Output ═══════╩═════════════════════════════╩═════════════════════════╣ MEM013:                          ░║
 ║ STDOUT00                                                                        ║ MEM014:                          ░║
 ║ STDOUT01                                                                        ║ MEM015:                          ░║

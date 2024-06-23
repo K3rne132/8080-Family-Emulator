@@ -1,16 +1,22 @@
 #pragma once
-#ifdef E_I8080
-#define CLK_MORE 0
-#define CLK_LESS 0
-#define JMP_DIFF 0
-#define CALL_DIFF 0
-#define RET_DIFF 0x100
-#elif defined E_I8085
+#ifdef E_I8085
 #define CLK_MORE 1
 #define CLK_LESS -1
 #define JMP_DIFF -3
 #define CALL_DIFF -2
 #define RET_DIFF 0x200
+#define MOV_R_R_DIFF -1
+#else
+#define CLK_MORE 0
+#define CLK_LESS 0
+#define JMP_DIFF 0
+#define CALL_DIFF 0
+#define RET_DIFF 0x100
+#ifdef E_NEC8080
+#define MOV_R_R_DIFF -1
+#else
+#define MOV_R_R_DIFF 0
+#endif
 #endif
 #include <inttypes.h>
 
@@ -69,18 +75,20 @@ typedef uint16_t(*INSTRUCTION)(_INTEL_8080* i8080);
 
 typedef struct _status {
 	uint8_t C  : 1; // Carry (C) Flag Bit
-#ifndef E_I8085
-	uint8_t    : 1; // Reserved (1)
+#ifdef E_I8085
+	uint8_t U  : 1; // Underflow Indicator (UI/K) Flag Bit
 #else
-	uint8_t U  : 1; // Underflow Indicator (UI) Flag Bit
+	uint8_t    : 1; // Reserved (1)
 #endif
 	uint8_t P  : 1; // Parity (P) Flag Bit
 	uint8_t    : 1; // Reserved (0)
 	uint8_t AC : 1; // Auxiliary Carry (AC) Flag Bit
-#ifndef E_I8085
-	uint8_t    : 1; // Reserved (0)
-#else
+#ifdef E_I8085
 	uint8_t V  : 1; // Overflow Flag Bit
+#elif defined E_NEC8080
+	uint8_t B  : 1; // Substract (SUB) Flag Bit
+#else
+	uint8_t    : 1; // Reserved (0)
 #endif
 	uint8_t Z  : 1; // Zero (Z) Flag Bit
 	uint8_t S  : 1; // Sign (S) Flag Bit
@@ -310,7 +318,7 @@ typedef struct _EMUL_STRUCT {
 	const INSTRUCTION OPCODE;
 } EMUL_STRUCT;
 
-#ifdef E_I8080
+#ifndef E_I8085
 const EMUL_STRUCT EMUL_DATA[256] = {
 	{"NOP", 1, nop}, {"LXI B,%hXh", 3, lxi}, {"STAX B", 1, stax}, {"INX B", 1, inx},
 	{"INR B", 1, inr}, {"DCR B", 1, dcr}, {"MVI B,%hhXh", 2, mvi}, {"RLC", 1, rlc},
@@ -362,19 +370,19 @@ const EMUL_STRUCT EMUL_DATA[256] = {
 	{"CMP H", 1, cmp}, {"CMP L", 1, cmp}, {"CMP M", 1, cmp}, {"CMP A", 1, cmp},
 	{"RNZ", 1, rnz}, {"POP B", 1, pop}, {"JNZ %hXh", 3, jnz}, {"JMP %hXh", 3, jmp},
 	{"CNZ %hXh", 3, cnz}, {"PUSH B", 1, push}, {"ADI %hhXh", 2, adi}, {"RST 0", 1, rst},
-	{"RZ", 1, rz}, {"RET", 1, ret}, {"JZ %hXh", 3, jz}, {"NOP", 1, nop},
+	{"RZ", 1, rz}, {"RET", 1, ret}, {"JZ %hXh", 3, jz}, {"JMP %hXh", 3, jmp},
 	{"CZ %hXh", 3, cz}, {"CALL %hXh", 3, call}, {"ACI %hhXh", 2, aci}, {"RST 1", 1, rst},
 	{"RNC", 1, rnc}, {"POP D", 1, pop}, {"JNC %hXh", 3, jnc}, {"OUT %hhXh", 2, out},
 	{"CNC %hXh", 3, cnc}, {"PUSH D", 1, push}, {"SUI %hhXh", 2, sui}, {"RST 2", 1, rst},
-	{"RC", 1, rc}, {"NOP", 1, nop}, {"JC %hXh", 3, jc}, {"IN %hhXh", 2, in},
-	{"CC %hXh", 3, cc}, {"NOP", 1, nop}, {"SBI %hhXh", 2, sbi}, {"RST 3", 1, rst},
+	{"RC", 1, rc}, {"RET", 1, ret}, {"JC %hXh", 3, jc}, {"IN %hhXh", 2, in},
+	{"CC %hXh", 3, cc}, {"CALL %hXh", 3, call}, {"SBI %hhXh", 2, sbi}, {"RST 3", 1, rst},
 	{"RPO", 1, rpo}, {"POP H", 1, pop}, {"JPO %hXh", 3, jpo}, {"XTHL", 1, xthl},
 	{"CPO %hXh", 3, cpo}, {"PUSH H", 1, push}, {"ANI %hhXh", 2, ani}, {"RST 4", 1, rst},
 	{"RPE", 1, rpe}, {"PCHL", 1, pchl}, {"JPE %hXh", 3, jpe}, {"XCHG", 1, xchg},
-	{"CPE %hXh", 3, cpe}, {"NOP", 1, nop}, {"XRI %hhXh", 2, xri}, {"RST 5", 1, rst},
+	{"CPE %hXh", 3, cpe}, {"CALL %hXh", 3, call}, {"XRI %hhXh", 2, xri}, {"RST 5", 1, rst},
 	{"RP", 1, rp}, {"POP PSW", 1, pop}, {"JP %hXh", 3, jp}, {"DI", 1, di},
 	{"CP %hXh", 3, cp}, {"PUSH PSW", 1, push}, {"ORI %hhXh", 2, ori}, {"RST 6", 1, rst},
 	{"RM", 1, rm}, {"SPHL", 1, sphl}, {"JM %hXh", 3, jm}, {"EI", 1, ei},
-	{"CM %hXh", 3, cm}, {"NOP", 1, nop}, {"CPI %hhXh", 2, cpi}, {"RST 7", 1, rst}
+	{"CM %hXh", 3, cm}, {"CALL %hXh", 3, call}, {"CPI %hhXh", 2, cpi}, {"RST 7", 1, rst}
 };
-#endif // I8080
+#endif
