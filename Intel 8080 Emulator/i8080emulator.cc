@@ -17,7 +17,6 @@ int i8080_initialize(
 	i8080->F = 0b00000010;
 	i8080->PC = origin_pc;
 	i8080->SP = origin_sp;
-	i8080->INSTRUCTIONS = OPCODE_TABLE;
 	i8080->MEM = (uint8_t*)calloc(0x10000, sizeof(uint8_t));
 	if (i8080->MEM == NULL)
 		return 1;
@@ -132,7 +131,7 @@ int emulate(
 			if (i8080->PC == 0x0005 && bdos)
 				bdos_syscall(i8080, screen);
 			add_to_history(screen, i8080->PC);
-			result = i8080->INSTRUCTIONS[i8080->MEM[i8080->PC]](i8080);
+			result = EMUL_DATA[i8080->MEM[i8080->PC]].OPCODE(i8080);
 			i8080->PC += GETINSTRUCTIONBYTES(result);
 			tmp_cycles = GETINSTRUCTIONCYCLES(result);
 			i8080->CYCLES += tmp_cycles;

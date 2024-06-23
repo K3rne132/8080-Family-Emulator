@@ -65,7 +65,7 @@ int replace_program(
 	char* text = (char*)malloc(len);
 	if (text == NULL)
 		return -1;
-	snprintf(text, len, OPCODE_NAME[i8080->MEM[address[num]]],
+	snprintf(text, len, EMUL_DATA[i8080->MEM[address[num]]].OPCODE_NAME,
 		MAKE_WORD(i8080->MEM[address[num] + 1], i8080->MEM[address[num] + 2]));
 	int result = replace_pattern(line, pattern,
 		(address[num] != 0) ? ("0x%04X %-15s") : (FORMAT_SKIP), address[num], text);
@@ -111,7 +111,7 @@ void print_screen(
 	uint16_t fake_pc = i8080->PC;
 	for (int j = 0; j <= MAX_HISTORY_SIZE; j++) {
 		screen->next_address[j] = fake_pc;
-		uint8_t opcode_len = OPCODE_LENGTH[i8080->MEM[fake_pc]];
+		uint8_t opcode_len = EMUL_DATA[i8080->MEM[fake_pc]].OPCODE_LENGTH;
 		if (opcode_len == 0 && j != MAX_HISTORY_SIZE) {
 			screen->next_address[j + 1] = fake_pc + 1;
 			break;

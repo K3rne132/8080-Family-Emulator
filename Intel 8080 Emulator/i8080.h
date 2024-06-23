@@ -94,7 +94,6 @@ typedef struct _INTEL_8080 {
 	uint8_t* PORT; // 0 - 255 I/O ports
 
 	uint64_t CYCLES; // number of cycles
-	const INSTRUCTION* INSTRUCTIONS; // pointer to opcode table
 	uint8_t  STEPPING; // is instruction stepping
 
 	uint16_t PC; // Program Counter
@@ -305,93 +304,77 @@ uint16_t in(INTEL_8080* i8080);
 uint16_t out(INTEL_8080* i8080);
 uint16_t hlt(INTEL_8080* i8080);
 
+typedef struct _EMUL_STRUCT {
+	const char*       OPCODE_NAME;
+	const uint8_t     OPCODE_LENGTH;
+	const INSTRUCTION OPCODE;
+} EMUL_STRUCT;
+
 #ifdef E_I8080
-static const char* OPCODE_NAME[256] = {
-	"NOP", "LXI B,%hXh", "STAX B", "INX B", "INR B", "DCR B", "MVI B,%hhXh", "RLC", // 0x00 - 0x07
-	"NOP", "DAD B", "LDAX B", "DCX B", "INR C", "DCR C", "MVI C,%hhXh", "RRC", // 0x08 - 0x0F
-	"NOP", "LXI D,%hXh", "STAX D", "INX D", "INR D", "DCR D", "MVI D,%hhXh", "RAL", // 0x10 - 0x17
-	"NOP", "DAD D", "LDAX D", "DCX D", "INR E", "DCR E", "MVI E,%hhXh", "RAR", // 0x18 - 0x1F
-	"NOP", "LXI H,%hXh", "SHLD %hXh", "INX H", "INR H", "DCR H", "MVI H,%hhXh", "DAA", // 0x20 - 0x27
-	"NOP", "DAD H", "LHLD %hXh", "DCX H", "INR L", "DCR L", "MVI L,%hhXh", "CMA", // 0x28 - 0x2F
-	"NOP", "LXI SP,%hXh", "STA %hXh", "INX SP", "INR M", "DCR M", "MVI M,%hhXh", "STC", // 0x30 - 0x37
-	"NOP", "DAD SP", "LDA %hXh", "DCX SP", "INR A", "DCR A", "MVI A,%hhXh", "CMC", // 0x38 - 0x3F
-	"MOV B,B", "MOV B,C", "MOV B,D", "MOV B,E", "MOV B,H", "MOV B,L", "MOV B,M", "MOV B,A", // 0x40 - 0x47
-	"MOV C,B", "MOV C,C", "MOV C,D", "MOV C,E", "MOV C,H", "MOV C,L", "MOV C,M", "MOV C,A", // 0x48 - 0x4F
-	"MOV D,B", "MOV D,C", "MOV D,D", "MOV D,E", "MOV D,H", "MOV D,L", "MOV D,M", "MOV D,A", // 0x50 - 0x57
-	"MOV E,B", "MOV E,C", "MOV E,D", "MOV E,E", "MOV E,H", "MOV E,L", "MOV E,M", "MOV E,A", // 0x58 - 0x5F
-	"MOV H,B", "MOV H,C", "MOV H,D", "MOV H,E", "MOV H,H", "MOV H,L", "MOV H,M", "MOV H,A", // 0x60 - 0x67
-	"MOV L,B", "MOV L,C", "MOV L,D", "MOV L,E", "MOV L,H", "MOV L,L", "MOV L,M", "MOV L,A", // 0x68 - 0x6F
-	"MOV M,B", "MOV M,C", "MOV M,D", "MOV M,E", "MOV M,H", "MOV M,L", "HLT", "MOV M,A", // 0x70 - 0x77
-	"MOV A,B", "MOV A,C", "MOV A,D", "MOV A,E", "MOV A,H", "MOV A,L", "MOV A,M", "MOV A,A", // 0x78 - 0x7F
-	"ADD B", "ADD C", "ADD D", "ADD E", "ADD H", "ADD L", "ADD M", "ADD A", // 0x80 - 0x87
-	"ADC B", "ADC C", "ADC D", "ADC E", "ADC H", "ADC L", "ADC M", "ADC A", // 0x88 - 0x8F
-	"SUB B", "SUB C", "SUB D", "SUB E", "SUB H", "SUB L", "SUB M", "SUB A", // 0x90 - 0x97
-	"SBB B", "SBB C", "SBB D", "SBB E", "SBB H", "SBB L", "SBB M", "SBB A", // 0x98 - 0x9F
-	"ANA B", "ANA C", "ANA D", "ANA E", "ANA H", "ANA L", "ANA M", "ANA A", // 0xA0 - 0xA7
-	"XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A", // 0xA8 - 0xAF
-	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", // 0xB0 - 0xB7
-	"CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A", // 0xB8 - 0xBF
-	"RNZ", "POP B", "JNZ %hXh", "JMP %hXh", "CNZ %hXh", "PUSH B", "ADI %hhXh", "RST 0", // 0xC0 - 0xC7
-	"RZ", "RET", "JZ %hXh", "NOP", "CZ %hXh", "CALL %hXh", "ACI %hhXh", "RST 1", // 0xC8 - 0xCF
-	"RNC", "POP D", "JNC %hXh", "OUT %hhXh", "CNC %hXh", "PUSH D", "SUI %hhXh", "RST 2", // 0xD0 - 0xD7
-	"RC", "NOP", "JC %hXh", "IN %hhXh", "CC %hXh", "NOP", "SBI %hhXh", "RST 3", // 0xD8 - 0xDF
-	"RPO", "POP H", "JPO %hXh", "XTHL", "CPO %hXh", "PUSH H", "ANI %hhXh", "RST 4", // 0xE0 - 0xE7
-	"RPE", "PCHL", "JPE %hXh", "XCHG", "CPE %hXh", "NOP", "XRI %hhXh", "RST 5", // 0xE8 - 0xEF
-	"RP", "POP PSW", "JP %hXh", "DI", "CP %hXh", "PUSH PSW", "ORI %hhXh", "RST 6", // 0xF0 - 0xF7
-	"RM", "SPHL", "JM %hXh", "EI", "CM %hXh", "NOP", "CPI %hhXh", "RST 7" // 0xF8 - 0xFF
-};
-
-static const uint8_t OPCODE_LENGTH[256] = {
-	1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 0x00 - 0x0F
-	1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 0x10 - 0x1F
-	1, 3, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, // 0x20 - 0x2F
-	1, 3, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, // 0x30 - 0x3F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40 - 0x4F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x50 - 0x5F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60 - 0x6F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x70 - 0x7F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x80 - 0x8F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x90 - 0x9F
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0xA0 - 0xAF
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0xB0 - 0xBF
-	1, 1, 3, 0, 3, 1, 1, 0, 1, 0, 3, 1, 3, 0, 2, 0, // 0xC0 - 0xCF
-	1, 1, 3, 2, 3, 1, 2, 0, 1, 1, 3, 2, 3, 1, 2, 0, // 0xD0 - 0xDF
-	1, 1, 3, 1, 3, 1, 2, 0, 1, 0, 3, 1, 3, 1, 2, 0, // 0xE0 - 0xEF
-	1, 1, 3, 1, 3, 1, 2, 0, 1, 1, 3, 1, 3, 1, 2, 0  // 0xF0 - 0xFF
-};
-
-static const INSTRUCTION OPCODE_TABLE[256] = {
-	nop, lxi,  stax, inx,  inr, dcr,  mvi, rlc, // 0x00 - 0x07
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rrc, // 0x08 - 0x0F
-	nop, lxi,  stax, inx,  inr, dcr,  mvi, ral, // 0x10 - 0x17
-	nop, dad,  ldax, dcx,  inr, dcr,  mvi, rar, // 0x18 - 0x1F
-	nop, lxi,  shld, inx,  inr, dcr,  mvi, daa, // 0x20 - 0x27
-	nop, dad,  lhld, dcx,  inr, dcr,  mvi, cma, // 0x28 - 0x2F
-	nop, lxi,  sta,  inx,  inr, dcr,  mvi, stc, // 0x30 - 0x37
-	nop, dad,  lda,  dcx,  inr, dcr,  mvi, cmc, // 0x38 - 0x3F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x40 - 0x47
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x48 - 0x4F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x50 - 0x57
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x58 - 0x5F
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x60 - 0x67
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x68 - 0x6F
-	mov, mov,  mov,  mov,  mov, mov,  hlt, mov, // 0x70 - 0x77
-	mov, mov,  mov,  mov,  mov, mov,  mov, mov, // 0x78 - 0x7F
-	add, add,  add,  add,  add, add,  add, add, // 0x80 - 0x87
-	adc, adc,  adc,  adc,  adc, adc,  adc, adc, // 0x88 - 0x8F
-	sub, sub,  sub,  sub,  sub, sub,  sub, sub, // 0x90 - 0x97
-	sbb, sbb,  sbb,  sbb,  sbb, sbb,  sbb, sbb, // 0x98 - 0x9F
-	ana, ana,  ana,  ana,  ana, ana,  ana, ana, // 0xA0 - 0xA7
-	xra, xra,  xra,  xra,  xra, xra,  xra, xra, // 0xA8 - 0xAF
-	ora, ora,  ora,  ora,  ora, ora,  ora, ora, // 0xB0 - 0xB7
-	cmp, cmp,  cmp,  cmp,  cmp, cmp,  cmp, cmp, // 0xB8 - 0xBF
-	rnz, pop,  jnz,  jmp,  cnz, push, adi, rst, // 0xC0 - 0xC7
-	rz,  ret,  jz,   nop,  cz,  call, aci, rst, // 0xC8 - 0xCF
-	rnc, pop,  jnc,  out,  cnc, push, sui, rst, // 0xD0 - 0xD7
-	rc,  nop,  jc,   in,   cc,  nop,  sbi, rst, // 0xD8 - 0xDF
-	rpo, pop,  jpo,  xthl, cpo, push, ani, rst, // 0xE0 - 0xE7
-	rpe, pchl, jpe,  xchg, cpe, nop,  xri, rst, // 0xE8 - 0xEF
-	rp,  pop,  jp,   di,   cp,  push, ori, rst, // 0xF0 - 0xF7
-	rm,  sphl, jm,   ei,   cm,  nop,  cpi, rst  // 0xF8 - 0xFF
+const EMUL_STRUCT EMUL_DATA[256] = {
+	{"NOP", 1, nop}, {"LXI B,%hXh", 3, lxi}, {"STAX B", 1, stax}, {"INX B", 1, inx},
+	{"INR B", 1, inr}, {"DCR B", 1, dcr}, {"MVI B,%hhXh", 2, mvi}, {"RLC", 1, rlc},
+	{"NOP", 1, nop}, {"DAD B", 1, dad}, {"LDAX B", 1, ldax}, {"DCX B", 1, dcx},
+	{"INR C", 1, inr}, {"DCR C", 1, dcr}, {"MVI C,%hhXh", 2, mvi}, {"RRC", 1, rrc},
+	{"NOP", 1, nop}, {"LXI D,%hXh", 3, lxi}, {"STAX D", 1, stax}, {"INX D", 1, inx},
+	{"INR D", 1, inr}, {"DCR D", 1, dcr}, {"MVI D,%hhXh", 2, mvi}, {"RAL", 1, ral},
+	{"NOP", 1, nop}, {"DAD D", 1, dad}, {"LDAX D", 1, ldax}, {"DCX D", 1, dcx},
+	{"INR E", 1, inr}, {"DCR E", 1, dcr}, {"MVI E,%hhXh", 2, mvi}, {"RAR", 1, rar},
+	{"NOP", 1, nop}, {"LXI H,%hXh", 3, lxi}, {"SHLD %hXh", 3, shld}, {"INX H", 1, inx},
+	{"INR H", 1, inr}, {"DCR H", 1, dcr}, {"MVI H,%hhXh", 2, mvi}, {"DAA", 1, daa},
+	{"NOP", 1, nop}, {"DAD H", 1, dad}, {"LHLD %hXh", 3, lhld}, {"DCX H", 1, dcx},
+	{"INR L", 1, inr}, {"DCR L", 1, dcr}, {"MVI L,%hhXh", 2, mvi}, {"CMA", 1, cma},
+	{"NOP", 1, nop}, {"LXI SP,%hXh", 3, lxi}, {"STA %hXh", 3, sta}, {"INX SP", 1, inx},
+	{"INR M", 1, inr}, {"DCR M", 1, dcr}, {"MVI M,%hhXh", 2, mvi}, {"STC", 1, stc},
+	{"NOP", 1, nop}, {"DAD SP", 1, dad}, {"LDA %hXh", 3, lda}, {"DCX SP", 1, dcx},
+	{"INR A", 1, inr}, {"DCR A", 1, dcr}, {"MVI A,%hhXh", 2, mvi}, {"CMC", 1, cmc},
+	{"MOV B,B", 1, mov}, {"MOV B,C", 1, mov}, {"MOV B,D", 1, mov}, {"MOV B,E", 1, mov},
+	{"MOV B,H", 1, mov}, {"MOV B,L", 1, mov}, {"MOV B,M", 1, mov}, {"MOV B,A", 1, mov},
+	{"MOV C,B", 1, mov}, {"MOV C,C", 1, mov}, {"MOV C,D", 1, mov}, {"MOV C,E", 1, mov},
+	{"MOV C,H", 1, mov}, {"MOV C,L", 1, mov}, {"MOV C,M", 1, mov}, {"MOV C,A", 1, mov},
+	{"MOV D,B", 1, mov}, {"MOV D,C", 1, mov}, {"MOV D,D", 1, mov}, {"MOV D,E", 1, mov},
+	{"MOV D,H", 1, mov}, {"MOV D,L", 1, mov}, {"MOV D,M", 1, mov}, {"MOV D,A", 1, mov},
+	{"MOV E,B", 1, mov}, {"MOV E,C", 1, mov}, {"MOV E,D", 1, mov}, {"MOV E,E", 1, mov},
+	{"MOV E,H", 1, mov}, {"MOV E,L", 1, mov}, {"MOV E,M", 1, mov}, {"MOV E,A", 1, mov},
+	{"MOV H,B", 1, mov}, {"MOV H,C", 1, mov}, {"MOV H,D", 1, mov}, {"MOV H,E", 1, mov},
+	{"MOV H,H", 1, mov}, {"MOV H,L", 1, mov}, {"MOV H,M", 1, mov}, {"MOV H,A", 1, mov},
+	{"MOV L,B", 1, mov}, {"MOV L,C", 1, mov}, {"MOV L,D", 1, mov}, {"MOV L,E", 1, mov},
+	{"MOV L,H", 1, mov}, {"MOV L,L", 1, mov}, {"MOV L,M", 1, mov}, {"MOV L,A", 1, mov},
+	{"MOV M,B", 1, mov}, {"MOV M,C", 1, mov}, {"MOV M,D", 1, mov}, {"MOV M,E", 1, mov},
+	{"MOV M,H", 1, mov}, {"MOV M,L", 1, mov}, {"HLT", 1, hlt}, {"MOV M,A", 1, mov},
+	{"MOV A,B", 1, mov}, {"MOV A,C", 1, mov}, {"MOV A,D", 1, mov}, {"MOV A,E", 1, mov},
+	{"MOV A,H", 1, mov}, {"MOV A,L", 1, mov}, {"MOV A,M", 1, mov}, {"MOV A,A", 1, mov},
+	{"ADD B", 1, add}, {"ADD C", 1, add}, {"ADD D", 1, add}, {"ADD E", 1, add},
+	{"ADD H", 1, add}, {"ADD L", 1, add}, {"ADD M", 1, add}, {"ADD A", 1, add},
+	{"ADC B", 1, adc}, {"ADC C", 1, adc}, {"ADC D", 1, adc}, {"ADC E", 1, adc},
+	{"ADC H", 1, adc}, {"ADC L", 1, adc}, {"ADC M", 1, adc}, {"ADC A", 1, adc},
+	{"SUB B", 1, sub}, {"SUB C", 1, sub}, {"SUB D", 1, sub}, {"SUB E", 1, sub},
+	{"SUB H", 1, sub}, {"SUB L", 1, sub}, {"SUB M", 1, sub}, {"SUB A", 1, sub},
+	{"SBB B", 1, sbb}, {"SBB C", 1, sbb}, {"SBB D", 1, sbb}, {"SBB E", 1, sbb},
+	{"SBB H", 1, sbb}, {"SBB L", 1, sbb}, {"SBB M", 1, sbb}, {"SBB A", 1, sbb},
+	{"ANA B", 1, ana}, {"ANA C", 1, ana}, {"ANA D", 1, ana}, {"ANA E", 1, ana},
+	{"ANA H", 1, ana}, {"ANA L", 1, ana}, {"ANA M", 1, ana}, {"ANA A", 1, ana},
+	{"XRA B", 1, xra}, {"XRA C", 1, xra}, {"XRA D", 1, xra}, {"XRA E", 1, xra},
+	{"XRA H", 1, xra}, {"XRA L", 1, xra}, {"XRA M", 1, xra}, {"XRA A", 1, xra},
+	{"ORA B", 1, ora}, {"ORA C", 1, ora}, {"ORA D", 1, ora}, {"ORA E", 1, ora},
+	{"ORA H", 1, ora}, {"ORA L", 1, ora}, {"ORA M", 1, ora}, {"ORA A", 1, ora},
+	{"CMP B", 1, cmp}, {"CMP C", 1, cmp}, {"CMP D", 1, cmp}, {"CMP E", 1, cmp},
+	{"CMP H", 1, cmp}, {"CMP L", 1, cmp}, {"CMP M", 1, cmp}, {"CMP A", 1, cmp},
+	{"RNZ", 1, rnz}, {"POP B", 1, pop}, {"JNZ %hXh", 3, jnz}, {"JMP %hXh", 3, jmp},
+	{"CNZ %hXh", 3, cnz}, {"PUSH B", 1, push}, {"ADI %hhXh", 2, adi}, {"RST 0", 1, rst},
+	{"RZ", 1, rz}, {"RET", 1, ret}, {"JZ %hXh", 3, jz}, {"NOP", 1, nop},
+	{"CZ %hXh", 3, cz}, {"CALL %hXh", 3, call}, {"ACI %hhXh", 2, aci}, {"RST 1", 1, rst},
+	{"RNC", 1, rnc}, {"POP D", 1, pop}, {"JNC %hXh", 3, jnc}, {"OUT %hhXh", 2, out},
+	{"CNC %hXh", 3, cnc}, {"PUSH D", 1, push}, {"SUI %hhXh", 2, sui}, {"RST 2", 1, rst},
+	{"RC", 1, rc}, {"NOP", 1, nop}, {"JC %hXh", 3, jc}, {"IN %hhXh", 2, in},
+	{"CC %hXh", 3, cc}, {"NOP", 1, nop}, {"SBI %hhXh", 2, sbi}, {"RST 3", 1, rst},
+	{"RPO", 1, rpo}, {"POP H", 1, pop}, {"JPO %hXh", 3, jpo}, {"XTHL", 1, xthl},
+	{"CPO %hXh", 3, cpo}, {"PUSH H", 1, push}, {"ANI %hhXh", 2, ani}, {"RST 4", 1, rst},
+	{"RPE", 1, rpe}, {"PCHL", 1, pchl}, {"JPE %hXh", 3, jpe}, {"XCHG", 1, xchg},
+	{"CPE %hXh", 3, cpe}, {"NOP", 1, nop}, {"XRI %hhXh", 2, xri}, {"RST 5", 1, rst},
+	{"RP", 1, rp}, {"POP PSW", 1, pop}, {"JP %hXh", 3, jp}, {"DI", 1, di},
+	{"CP %hXh", 3, cp}, {"PUSH PSW", 1, push}, {"ORI %hhXh", 2, ori}, {"RST 6", 1, rst},
+	{"RM", 1, rm}, {"SPHL", 1, sphl}, {"JM %hXh", 3, jm}, {"EI", 1, ei},
+	{"CM %hXh", 3, cm}, {"NOP", 1, nop}, {"CPI %hhXh", 2, cpi}, {"RST 7", 1, rst}
 };
 #endif // I8080
