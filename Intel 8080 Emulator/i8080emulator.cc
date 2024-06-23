@@ -234,6 +234,8 @@ int main(int argc, char** argv) {
 	DRAW_SCR_ARGS args = { NULL, &i8080 };
 #ifdef E_AM9080
 	const char* screen_file = "am9080.cpf";
+#elif defined E_NEC8080
+	const char* screen_file = "nec8080.cpf";
 #else
 	const char* screen_file = "intel8080.cpf";
 #endif

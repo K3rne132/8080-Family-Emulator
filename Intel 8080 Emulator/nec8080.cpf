@@ -1,0 +1,30 @@
+╔═ NEC D8080A ════════════╦═ Registers ═════════════════╦═ History ═══════════════╦══ Memory ═════════════════════════╗
+║ _   _ ______ _____      ║ B: BHEX (BDE) C: CHEX (CDE) ║  PROGRAM-5              ║ MEM000:                          ^║
+║| \ | |  ____/ ____|     ║ D: DHEX (DDE) E: EHEX (EDE) ║  PROGRAM-4              ║ MEM001:                          ▓║
+║|  \| | |__ | |          ║ H: HHEX (HDE) L: LHEX (LDE) ║  PROGRAM-3              ║ MEM002:                          ▓║
+║| . ` |  __|| |          ║ A: AHEX (ADE) F: FHEX (FDE) ║  PROGRAM-2              ║ MEM003:                          ▓║
+║| |\  | |___| |____      ║ SP: SPHEEX    PC: PCHEEX    ║  PROGRAM-1              ║ MEM004:                          ░║
+║|_|_\_|______\_____|___  ║                             ╠══ Program ══════════════╣ MEM005:                          ░║
+║ / _ \ / _ \ / _ \ / _ \ ║ Carry Bit:             FC   ║> PROGRAM+0              ║ MEM006:                          ░║
+║| (_) | | | | (_) | | | |║ AuxCarry Bit:          FA   ║  PROGRAM+1              ║ MEM007:                          ░║
+║ > _ <| | | |> _ <| | | |║ Sign Bit:              FS   ║  PROGRAM+2              ║ MEM008:                          ░║
+║| (_) | |_| | (_) | |_| |║ Zero Bit:              FZ   ║  PROGRAM+3              ║ MEM009:                          ░║
+║ \___/ \___/ \___/ \___/ ║ Parity Bit:            FP   ║  PROGRAM+4              ║ MEM010:                          ░║
+║                         ║ Substract Bit:         FB   ║  PROGRAM+5              ║ MEM011:                          ░║
+║                         ║ Halt Bit:              FH   ║  PROGRAM+6              ║ MEM012:                          ░║
+║                         ║ Interrupt Bit:         FI   ║  PROGRAM+6              ║ MEM012:                          ░║
+╠═ Standard Output ═══════╩═════════════════════════════╩═════════════════════════╣ MEM013:                          ░║
+║ STDOUT00                                                                        ║ MEM014:                          ░║
+║ STDOUT01                                                                        ║ MEM015:                          ░║
+║ STDOUT02                                                                        ║ MEM016:                          ░║
+║ STDOUT03                                                                        ║ MEM017:                          ░║
+║ STDOUT04                                                                        ║ MEM018:                          ░║
+║ STDOUT05                                                                        ║ MEM019:                          ░║
+║ STDOUT06                                                                        ║ MEM020:                          ░║
+║ STDOUT07                                                                        ║ MEM021:                          ░║
+║ STDOUT08                                                                        ║ MEM022:                          ░║
+║ STDOUT09                                                                        ║ MEM023:                          ░║
+║ STDOUT10                                                                        ║ MEM024:                          ░║
+║ STDOUT11                                                                        ║ MEM025:                          ░║
+║ STDOUT12                                                                        ║ MEM026:                          v║
+╚═════════════════════════════════════════════════════════════════════════════════╩═══════════════════════════════════╝

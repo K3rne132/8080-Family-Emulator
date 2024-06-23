@@ -46,7 +46,7 @@ static uint8_t alu_add(
 	i8080->status.AC = (((result ^ arg1 ^ arg2) & 0x10) != 0);
 	set_V_flag_int8(i8080, arg1, arg2, result);
 	set_UI_flag_int8(i8080);
-	set_B_flag(i8080, SET);
+	set_B_flag(i8080, RESET);
 	return result;
 }
 
@@ -58,7 +58,7 @@ static uint8_t alu_sub(
 ) {
 	uint32_t result = alu_add(i8080, arg1, ~arg2, 1 - carry);
 	i8080->status.C = 1 - i8080->status.C;
-	set_B_flag(i8080, RESET);
+	set_B_flag(i8080, SET);
 	return result;
 }
 
@@ -308,7 +308,7 @@ uint16_t dad(INTEL_8080* i8080) {
 	i8080->status.C = carry >> 16;
 	i8080->HL = carry;
 	set_V_flag_int16(i8080, i8080->HL, to_add, i8080->HL);
-	set_B_flag(i8080, SET);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 10);
 }
 
@@ -319,7 +319,7 @@ uint16_t inx(INTEL_8080* i8080) {
 #ifdef E_I8085
 	i8080->status.U = (*to_inx == 0x8000);
 #endif
-	set_B_flag(i8080, SET);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
@@ -330,7 +330,7 @@ uint16_t dcx(INTEL_8080* i8080) {
 #ifdef E_I8085
 	i8080->status.U = (*to_dcx == 0x7FFF);
 #endif
-	set_B_flag(i8080, RESET);
+	set_B_flag(i8080, SET);
 	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
