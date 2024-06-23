@@ -31,7 +31,7 @@ static const char* register_dec_strings[] = {
 };
 
 static const char* flag_strings[] = {
-	"FC", "FV", "FP", "FU", "FA", "\0", "FZ", "FS"
+	"FC", "FU", "FP", "\0", "FA", "FB", "FZ", "FS"
 };
 
 static const char* template_strings[] = {
