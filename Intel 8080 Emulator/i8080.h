@@ -160,6 +160,58 @@ uint8_t opcode(const INTEL_8080* i8080);
 void write_uint16_t_on_stack(INTEL_8080* i8080, uint16_t uint16_t);
 uint16_t read_uint16_t_from_stack(INTEL_8080* i8080);
 
+// returns parity flag for given value
+static uint8_t parity_check(const uint8_t val) {
+	// Source: https://stackoverflow.com/a/48041356
+	uint8_t x = val;
+	x ^= x >> 4;
+	x ^= x >> 2;
+	x ^= x >> 1;
+	return (~x) & 1;
+}
+
+// returns flag register based on extended arithmetic/logical operation result
+static void set_ZSP_flags(
+	INTEL_8080* i8080,
+	const uint32_t result
+) {
+	i8080->status.Z = ((result & 0xFF) == 0);
+	i8080->status.S = ((result & 0xFF) >= 0x80);
+	i8080->status.P = parity_check(result & 0xFF);
+}
+
+static void set_UI_flag_int8(
+	INTEL_8080* i8080
+) {
+#ifdef E_I8085
+	i8080->status.U = i8080->status.V ^ i8080->status.V;
+#endif
+}
+
+static void set_V_flag_int16(
+	INTEL_8080* i8080,
+	const int16_t arg1, // change to signed
+	const int16_t arg2, // change to signed
+	const int16_t result
+) {
+#ifdef E_I8085
+	i8080->status.V = ((arg1 >= 0 && arg2 >= 0 && result < 0) ||
+		(arg1 < 0 && arg2 < 0 && result >= 0));
+#endif
+}
+
+static void set_V_flag_int8(
+	INTEL_8080* i8080,
+	const int8_t arg1, // change to signed
+	const int8_t arg2, // change to signed
+	const int8_t result
+) {
+#ifdef E_I8085
+	i8080->status.V = ((arg1 >= 0 && arg2 >= 0 && result < 0) ||
+		(arg1 < 0 && arg2 < 0 && result >= 0));
+#endif
+}
+
 // INSTRUCTION SET
 
 uint16_t cmc(INTEL_8080* i8080);

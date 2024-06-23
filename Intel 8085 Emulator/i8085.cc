@@ -25,11 +25,18 @@ uint16_t arhl(INTEL_8080* i8080) {
 	i8080->L |= (i8080->H & 1);
 	i8080->H >>= 1;
 	i8080->H |= ((i8080->H & 0x40) << 1);
+	i8080->status.V = RESET;
 	return MAKERESULT(1, 7);
 }
 
 uint16_t dsub(INTEL_8080* i8080) {
-	i8080->HL -= i8080->BC;
+	uint16_t result = i8080->HL - i8080->BC;
+	set_ZSP_flags(i8080, result);
+	i8080->status.C = result >> 8;
+	i8080->status.AC = (((result ^ i8080->HL ^ ~i8080->BC) & 0x10) != 0);
+	set_V_flag_int16(i8080, i8080->HL, ~i8080->BC, result);
+	set_UI_flag_int8(i8080);
+	i8080->HL = result;
 	return MAKERESULT(1, 10);
 }
 
@@ -59,11 +66,13 @@ uint16_t lhlx(INTEL_8080* i8080) {
 
 uint16_t rdel(INTEL_8080* i8080) {
 	uint8_t new_carry = i8080->D >> 7;
+	uint16_t old_de = i8080->DE;
 	i8080->D <<= 1;
 	i8080->D |= ((i8080->E >> 7) & 1);
 	i8080->E <<= 1;
 	i8080->E |= i8080->status.C;
 	i8080->status.C = new_carry;
+	set_V_flag_int16(i8080, old_de, old_de, i8080->DE);
 	return MAKERESULT(1, 10);
 }
 
