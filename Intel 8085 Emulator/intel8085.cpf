@@ -10,7 +10,7 @@
 ║ > _ <| | | |> _ <|___ \ ║ Sign Bit:              FS   ║  PROGRAM+2              ║ MEM008:                          ░║
 ║| (_) | |_| | (_) |___) |║ Zero Bit:              FZ   ║  PROGRAM+3              ║ MEM009:                          ░║
 ║ \___/ \___/ \___/|____/ ║ Parity Bit:            FP   ║  PROGRAM+4              ║ MEM010:                          ░║
-║                         ║ Overflow Bit:          FV   ║  PROGRAM+5              ║ MEM011:                          ░║
+║                         ║ Overflow Bit:          FB   ║  PROGRAM+5              ║ MEM011:                          ░║
 ║                         ║ Underflow Bit:         FU   ║  PROGRAM+6              ║ MEM012:                          ░║
 ║                         ║ Halt Bit:              FH   ║  PROGRAM+7              ║ MEM012:                          ░║
 ║                         ║ Interrupt Bit:         FI   ║  PROGRAM+8              ║ MEM012:                          ░║
