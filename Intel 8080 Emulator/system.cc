@@ -1,5 +1,7 @@
 #include "system.h"
 #include <locale.h>
+#include <stdio.h>
+
 #ifdef _WIN32
 
 THREAD thread_create(void* (*worker)(void*), void* args) {
@@ -47,6 +49,12 @@ void cleanup_screen() {
 	SetConsoleCursorInfo(hstdout, &info);
 }
 
+void screen_go_home() {
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD pos = { 0,0 };
+	SetConsoleCursorPosition(console, pos);
+}
+
 #else
 
 THREAD thread_create(void* (*worker)(void*), void* args) {
@@ -74,5 +82,9 @@ void thread_sleep(uint32_t milliseconds) {
 }
 
 void initialize_screen() {}
+
+void screen_go_home() {
+	printf("\033[H");
+}
 
 #endif

@@ -17,6 +17,7 @@ THREAD thread_create(void* (*worker)(void*), void* args);
 void thread_destroy(THREAD thread);
 void thread_sleep(uint32_t milliseconds);
 void initialize_screen();
+void screen_go_home();
 void cleanup_screen();
 void initialize_keys();
 void cleanup_keys();

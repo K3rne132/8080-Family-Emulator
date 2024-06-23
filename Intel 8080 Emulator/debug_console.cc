@@ -99,7 +99,7 @@ void print_screen(
 	DBG_CONSOLE* screen,
 	INTEL_8080* i8080
 ) {
-	printf("\033[H");
+	screen_go_home();
 	for (int i = 0; i < MAX_FORMAT_HEIGHT; i++)
 		memcpy(screen->screen_text[i], screen->screen_format[i], MAX_FORMAT_WIDTH);
 
