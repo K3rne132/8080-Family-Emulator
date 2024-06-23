@@ -74,6 +74,8 @@ uint16_t rdel(INTEL_8080* i8080);
 uint16_t rstv(INTEL_8080* i8080);
 uint16_t shlx(INTEL_8080* i8080);
 
+
+
 #ifdef E_I8085
 const EMUL_STRUCT EMUL_DATA[256] = {
 	{"NOP", 1, nop}, {"LXI B,%hXh", 3, lxi}, {"STAX B", 1, stax}, {"INX B", 1, inx},

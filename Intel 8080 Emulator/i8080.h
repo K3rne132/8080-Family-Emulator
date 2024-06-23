@@ -73,7 +73,7 @@ typedef uint16_t(*INSTRUCTION)(_INTEL_8080* i8080);
 |-------------------------------|
 */
 
-typedef struct _status {
+typedef struct _STATUS {
 	uint8_t C  : 1; // Carry (C) Flag Bit
 #ifdef E_I8085
 	uint8_t U  : 1; // Underflow Indicator (UI/K) Flag Bit
@@ -219,6 +219,17 @@ static void set_V_flag_int8(
 #endif
 }
 
+static void set_B_flag(
+	INTEL_8080* i8080,
+	uint8_t status
+) {
+#ifdef E_NEC8080
+	i8080->status.B = status;
+#endif
+}
+
+
+
 // INSTRUCTION SET
 
 uint16_t cmc(INTEL_8080* i8080);
@@ -311,6 +322,8 @@ uint16_t di(INTEL_8080* i8080);
 uint16_t in(INTEL_8080* i8080);
 uint16_t out(INTEL_8080* i8080);
 uint16_t hlt(INTEL_8080* i8080);
+
+
 
 typedef struct _EMUL_STRUCT {
 	const char*       OPCODE_NAME;

@@ -46,6 +46,7 @@ static uint8_t alu_add(
 	i8080->status.AC = (((result ^ arg1 ^ arg2) & 0x10) != 0);
 	set_V_flag_int8(i8080, arg1, arg2, result);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, SET);
 	return result;
 }
 
@@ -57,6 +58,7 @@ static uint8_t alu_sub(
 ) {
 	uint32_t result = alu_add(i8080, arg1, ~arg2, 1 - carry);
 	i8080->status.C = 1 - i8080->status.C;
+	set_B_flag(i8080, RESET);
 	return result;
 }
 
@@ -72,6 +74,8 @@ uint16_t read_uint16_t_from_stack(INTEL_8080* i8080) {
 	result |= i8080->MEM[i8080->SP];
 	return result;
 }
+
+
 
 uint16_t cmc(INTEL_8080* i8080) {
 	i8080->status.C ^= 1;
@@ -90,6 +94,7 @@ uint16_t inr(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, carry);
 	set_V_flag_int8(i8080, carry - 1, 1, carry);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	i8080->status.AC = ((carry & 0x0F) == 0);
 	return MAKERESULT(1, (reg != REG_M ? 5 + CLK_LESS : 10));
 }
@@ -101,6 +106,7 @@ uint16_t dcr(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, carry);
 	set_V_flag_int8(i8080, carry + 1, -1, carry);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, SET);
 	i8080->status.AC = !((carry & 0x0F) == 0x0F);
 	return MAKERESULT(1, (reg != REG_M ? 5 + CLK_LESS : 10));
 }
@@ -121,9 +127,14 @@ uint16_t daa(INTEL_8080* i8080) {
 		to_add += 0x60;
 		old_c = 1;
 	}
+	uint8_t old_b = RESET;
+#ifdef E_NEC8080
+	old_b = i8080->status.B;
+#endif // E_NEC8080
 	uint8_t result = alu_add(i8080, i8080->A, to_add, 0);
 	set_V_flag_int8(i8080, i8080->A, to_add, result);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, old_b); // restore SUB bit for DAA
 	i8080->A = result;
 	i8080->status.C = old_c;
 	return MAKERESULT(1, 4);
@@ -201,6 +212,7 @@ uint16_t ana(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, (reg != REG_M ? 4 : 7));
 }
 
@@ -210,6 +222,7 @@ uint16_t xra(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	i8080->status.C = RESET;
 	i8080->status.AC = RESET;
 	return MAKERESULT(1, (reg != REG_M ? 4 : 7));
@@ -221,6 +234,7 @@ uint16_t ora(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	i8080->status.C = RESET;
 	i8080->status.AC = RESET;
 	return MAKERESULT(1, (reg != REG_M ? 4 : 7));
@@ -239,6 +253,7 @@ uint16_t rlc(INTEL_8080* i8080) {
 	i8080->A <<= 1;
 	i8080->A |= i8080->status.C;
 	set_V_flag_int8(i8080, old_a, old_a, i8080->A);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 4);
 }
 
@@ -247,6 +262,7 @@ uint16_t rrc(INTEL_8080* i8080) {
 	i8080->A >>= 1;
 	i8080->A |= (i8080->status.C << 7);
 	set_V_flag_int8(i8080, 0, 0, 0);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 4);
 }
 
@@ -257,6 +273,7 @@ uint16_t ral(INTEL_8080* i8080) {
 	i8080->A |= i8080->status.C;
 	i8080->status.C = new_carry;
 	set_V_flag_int8(i8080, old_a, old_a, i8080->A);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 4);
 }
 
@@ -266,6 +283,7 @@ uint16_t rar(INTEL_8080* i8080) {
 	i8080->A |= (i8080->status.C << 7);
 	i8080->status.C = new_carry;
 	set_V_flag_int8(i8080, 0, 0, 0);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 4);
 }
 
@@ -290,6 +308,7 @@ uint16_t dad(INTEL_8080* i8080) {
 	i8080->status.C = carry >> 16;
 	i8080->HL = carry;
 	set_V_flag_int16(i8080, i8080->HL, to_add, i8080->HL);
+	set_B_flag(i8080, SET);
 	return MAKERESULT(1, 10);
 }
 
@@ -300,6 +319,7 @@ uint16_t inx(INTEL_8080* i8080) {
 #ifdef E_I8085
 	i8080->status.U = (*to_inx == 0x8000);
 #endif
+	set_B_flag(i8080, SET);
 	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
@@ -310,6 +330,7 @@ uint16_t dcx(INTEL_8080* i8080) {
 #ifdef E_I8085
 	i8080->status.U = (*to_dcx == 0x7FFF);
 #endif
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(1, 5 + CLK_MORE);
 }
 
@@ -380,6 +401,7 @@ uint16_t ani(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	return MAKERESULT(2, 7);
 }
 
@@ -388,6 +410,7 @@ uint16_t xri(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	i8080->status.C = RESET;
 	i8080->status.AC = RESET;
 	return MAKERESULT(2, 7);
@@ -398,6 +421,7 @@ uint16_t ori(INTEL_8080* i8080) {
 	set_ZSP_flags(i8080, i8080->A);
 	set_V_flag_int8(i8080, 0, 0, 0);
 	set_UI_flag_int8(i8080);
+	set_B_flag(i8080, RESET);
 	i8080->status.C = RESET;
 	i8080->status.AC = RESET;
 	return MAKERESULT(2, 7);
