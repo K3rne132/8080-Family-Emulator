@@ -12,6 +12,8 @@
 ║ \___/ \___/ \___/|____/ ║ Parity Bit:            FP   ║  PROGRAM+4              ║ MEM010:                          ░║
 ║                         ║ Halt Bit:              FH   ║  PROGRAM+5              ║ MEM011:                          ░║
 ║                         ║ Interrupt Bit:         FI   ║  PROGRAM+6              ║ MEM012:                          ░║
+║                         ║ V Bit:                 FV   ║  PROGRAM+7              ║ MEM012:                          ░║
+║                         ║ UI Bit:                FU   ║  PROGRAM+8              ║ MEM012:                          ░║
 ╠═ Standard Output ═══════╩═════════════════════════════╩═════════════════════════╣ MEM013:                          ░║
 ║ STDOUT00                                                                        ║ MEM014:                          ░║
 ║ STDOUT01                                                                        ║ MEM015:                          ░║
@@ -24,7 +26,5 @@
 ║ STDOUT08                                                                        ║ MEM022:                          ░║
 ║ STDOUT09                                                                        ║ MEM023:                          ░║
 ║ STDOUT10                                                                        ║ MEM024:                          ░║
-║ STDOUT11                                                                        ║ MEM025:                          ░║
-║ STDOUT12                                                                        ║ MEM026:                          ░║
-║ STDOUT13                                                                        ║ MEM027:                          v║
+║ STDOUT11                                                                        ║ MEM025:                          v║
 ╚═════════════════════════════════════════════════════════════════════════════════╩═══════════════════════════════════╝
