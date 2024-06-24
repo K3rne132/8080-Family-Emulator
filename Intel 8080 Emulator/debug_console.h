@@ -23,11 +23,11 @@
 
 
 static const char* register_hex_strings[] = {
-	"BHEX", "CHEX", "DHEX", "EHEX", "HHEX", "LHEX", "FHEX", "AHEX"
+	"CHEX", "BHEX", "EHEX", "DHEX", "LHEX", "HHEX", "FHEX", "AHEX"
 };
 
 static const char* register_dec_strings[] = {
-	"BDE", "CDE", "DDE", "EDE", "HDE", "LDE", "FDE", "ADE"
+	"CDE", "BDE", "EDE", "DDE", "LDE", "HDE", "FDE", "ADE"
 };
 
 static const char* flag_strings[] = {

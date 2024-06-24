@@ -1,0 +1,154 @@
+0000                          ;Intel 8085 hidden instruction set tester
+0100                          .ORG   0x100   
+0100   C3 23 01               JMP   start   
+0103   63 68 65 63 6B 20 66 69 6E 69 73 68 65 64 0A 0D 24 CHC_MSG:   DB   "check finished",0x0A,0x0D,'$'   
+0114   63 68 65 63 6B 20 66 61 69 6C 65 64 0A 0D 24 ERR_MSG:   DB   "check failed",0x0A,0x0D,'$'   
+0123                START:    
+0123   21 34 12               LXI   h,0x1234   
+0126   10                     DB   0x10   ; ARHL
+0127   DA 45 02               JC   err   
+012A   7C                     MOV   a,h   
+012B   FE 09                  CPI   0x09   
+012D   C2 45 02               JNZ   err   
+0130   7D                     MOV   a,l   
+0131   FE 1A                  CPI   0x1a   
+0133   C2 45 02               JNZ   err   
+0136   21 AB 89               LXI   h,0x89ab   
+0139   10                     DB   0x10   ; ARHL
+013A   D2 45 02               JNC   err   
+013D   7C                     MOV   a,h   
+013E   FE 44                  CPI   0x44   
+0140   C2 45 02               JNZ   err   
+0143   7D                     MOV   a,l   
+0144   FE D5                  CPI   0xd5   
+0146   C2 45 02               JNZ   err   
+0149   CD 3E 02               CALL   fin   
+014C   21 21 43               LXI   h,0x4321   
+014F   01 34 12               LXI   b,0x1234   
+0152   08                     DB   0x08   ; DSUB
+0153   CA 45 02               JZ   err   
+0156   E2 45 02               JPO   err   
+0159   F2 45 02               JP   err   
+015C   7C                     MOV   a,h   
+015D   FE 30                  CPI   0x30   
+015F   7D                     MOV   a,l   
+0160   FE ED                  CPI   0xed   
+0162   C2 45 02               JNZ   err   
+0165   78                     MOV   a,b   
+0166   FE 12                  CPI   0x12   
+0168   79                     MOV   a,c   
+0169   FE 34                  CPI   0x34   
+016B   C2 45 02               JNZ   err   
+016E   CD 3E 02               CALL   fin   
+0171   3E 50                  MVI   a,0x50   
+0173   1E F0                  MVI   e,0xf0   
+0175   93                     SUB   e   
+0176   FA 45 02               JM   err   
+0179   FD                     DB   0xFD   
+017A   45 02                  DW   err   ; JK err
+017C   FE 60                  CPI   0x60   
+017E   C2 45 02               JNZ   err   
+0181   3E 50                  MVI   a,0x50   
+0183   1E B0                  MVI   e,0xb0   
+0185   93                     SUB   e   
+0186   F2 45 02               JP   err   
+0189   FD                     DB   0xFD   
+018A   45 02                  DW   err   ; JK err
+018C   FE A0                  CPI   0xa0   
+018E   C2 45 02               JNZ   err   
+0191   3E 50                  MVI   a,0x50   
+0193   1E 30                  MVI   e,0x30   
+0195   93                     SUB   e   
+0196   FA 45 02               JM   err   
+0199   FD                     DB   0xFD   
+019A   45 02                  DW   err   ; JK err
+019C   FE 20                  CPI   0x20   
+019E   C2 45 02               JNZ   err   
+01A1   3E D0                  MVI   a,0xd0   
+01A3   1E B0                  MVI   e,0xb0   
+01A5   93                     SUB   e   
+01A6   FA 45 02               JM   err   
+01A9   FD                     DB   0xFD   
+01AA   45 02                  DW   err   ; JK err
+01AC   FE 20                  CPI   0x20   
+01AE   C2 45 02               JNZ   err   
+01B1   21 34 12               LXI   h,0x1234   
+01B4   11 76 98               LXI   d,0x9876   
+01B7   28 DA                  DB   0x28,0xda   ; LDHI 0xda
+01B9   7A                     MOV   a,d   
+01BA   FE 13                  CPI   0x13   
+01BC   C2 45 02               JNZ   err   
+01BF   7B                     MOV   a,e   
+01C0   FE 0E                  CPI   0x0e   
+01C2   C2 45 02               JNZ   err   
+01C5   CD 3E 02               CALL   fin   
+01C8   31 34 12               LXI   sp,0x1234   
+01CB   11 76 98               LXI   d,0x9876   
+01CE   38 DA                  DB   0x38,0xda   ; LDSI 0xda
+01D0   7A                     MOV   a,d   
+01D1   FE 13                  CPI   0x13   
+01D3   C2 45 02               JNZ   err   
+01D6   7B                     MOV   a,e   
+01D7   FE 0E                  CPI   0x0e   
+01D9   C2 45 02               JNZ   err   
+01DC   CD 3E 02               CALL   fin   
+01DF   21 00 00               LXI   h,0x0000   
+01E2   11 00 10               LXI   d,0x1000   
+01E5   3E 12                  MVI   a,0x12   
+01E7   12                     STAX   d   
+01E8   13                     INX   d   
+01E9   3E 34                  MVI   a,0x34   
+01EB   12                     STAX   d   
+01EC   1B                     DCX   d   
+01ED   ED                     DB   0xed   ; LHLX
+01EE   7D                     MOV   a,l   
+01EF   FE 12                  CPI   0x12   
+01F1   C2 45 02               JNZ   err   
+01F4   7C                     MOV   a,h   
+01F5   FE 34                  CPI   0x34   
+01F7   C2 45 02               JNZ   err   
+01FA   CD 3E 02               CALL   fin   
+01FD   21 21 43               LXI   h,0x4321   
+0200   11 00 20               LXI   d,0x2000   
+0203   D9                     DB   0xd9   ; SHLX
+0204   1A                     LDAX   d   
+0205   FE 21                  CPI   0x21   
+0207   C2 45 02               JNZ   err   
+020A   13                     INX   d   
+020B   1A                     LDAX   d   
+020C   FE 43                  CPI   0x43   
+020E   C2 45 02               JNZ   err   
+0211   CD 3E 02               CALL   fin   
+0214   11 34 12               LXI   d,0x1234   
+0217   18                     DB   0x18   ; RDEL
+0218   DA 45 02               JC   err   
+021B   7A                     MOV   a,d   
+021C   FE 24                  CPI   0x24   
+021E   C2 45 02               JNZ   err   
+0221   7B                     MOV   a,e   
+0222   FE 68                  CPI   0x68   
+0224   C2 45 02               JNZ   err   
+0227   11 89 67               LXI   d,0x6789   
+022A   18                     DB   0x18   ; RDEL
+022B   DA 45 02               JC   err   
+022E   7A                     MOV   a,d   
+022F   FE CF                  CPI   0xcf   
+0231   C2 45 02               JNZ   err   
+0234   7B                     MOV   a,e   
+0235   FE 12                  CPI   0x12   
+0237   C2 45 02               JNZ   err   
+023A   CD 3E 02               CALL   fin   
+023D   76                     HLT   
+023E                FIN:      
+023E   11 03 01               LXI   d,chc_msg   
+0241   CD 4C 02               CALL   print   
+0244   C9                     RET   
+0245                ERR:      
+0245   11 14 01               LXI   d,err_msg   
+0248   CD 4C 02               CALL   print   
+024B   76                     HLT   
+024C                          ; 
+024C                PRINT:    
+024C   0E 09                  MVI   c,9   
+024E   CD 05 00               CALL   0x0005   
+0251   C9                     RET   

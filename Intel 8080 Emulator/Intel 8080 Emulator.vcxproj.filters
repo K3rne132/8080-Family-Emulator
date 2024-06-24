@@ -52,5 +52,11 @@
     <None Include="intel8080.cpf">
       <Filter>Pliki zasobów</Filter>
     </None>
+    <None Include="am9080.cpf">
+      <Filter>Pliki zasobów</Filter>
+    </None>
+    <None Include="nec8080.cpf">
+      <Filter>Pliki zasobów</Filter>
+    </None>
   </ItemGroup>
 </Project>

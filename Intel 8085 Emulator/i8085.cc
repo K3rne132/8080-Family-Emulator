@@ -20,11 +20,12 @@ uint16_t rim(INTEL_8080* i8080) {
 }
 
 uint16_t arhl(INTEL_8080* i8080) {
+	uint8_t old_c = (i8080->C << 7) & 0x80;
 	i8080->status.C = i8080->L & 1;
 	i8080->L >>= 1;
-	i8080->L |= (i8080->H & 1);
+	i8080->L |= ((i8080->H & 1) << 7);
 	i8080->H >>= 1;
-	i8080->H |= ((i8080->H & 0x40) << 1);
+	i8080->H |= old_c;
 	i8080->status.V = RESET;
 	return MAKERESULT(1, 7);
 }
@@ -61,7 +62,7 @@ uint16_t ldsi(INTEL_8080* i8080) {
 uint16_t lhlx(INTEL_8080* i8080) {
 	i8080->L = i8080->MEM[i8080->DE];
 	i8080->H = i8080->MEM[i8080->DE + 1];
-	return MAKERESULT(2, 10);
+	return MAKERESULT(1, 10);
 }
 
 uint16_t rdel(INTEL_8080* i8080) {

@@ -34,6 +34,7 @@ uint16_t uint16_t_arg(const INTEL_8080* i8080) {
 	return result;
 }
 
+// performs addition on ALU and sets all status flags
 static uint8_t alu_add(
 	INTEL_8080* i8080,
 	const uint8_t arg1,
@@ -50,6 +51,7 @@ static uint8_t alu_add(
 	return result;
 }
 
+// performs substraction on ALU and sets all status flags
 static uint8_t alu_sub(
 	INTEL_8080* i8080,
 	const uint8_t arg1,
@@ -127,11 +129,15 @@ uint16_t daa(INTEL_8080* i8080) {
 		to_add += 0x60;
 		old_c = 1;
 	}
-	uint8_t old_b = RESET;
 #ifdef E_NEC8080
-	old_b = i8080->status.B;
-#endif // E_NEC8080
+	uint8_t old_b = i8080->status.B;
+	uint8_t result = (i8080->status.B) ? // if last operation was a substraction
+		alu_sub(i8080, i8080->A, to_add, 0) :
+		alu_add(i8080, i8080->A, to_add, 0);
+#else
+	uint8_t old_b = RESET;
 	uint8_t result = alu_add(i8080, i8080->A, to_add, 0);
+#endif // E_NEC8080
 	set_V_flag_int8(i8080, i8080->A, to_add, result);
 	set_UI_flag_int8(i8080);
 	set_B_flag(i8080, old_b); // restore SUB bit for DAA

@@ -1,0 +1,130 @@
+0000                          ;Tic Tac Toe
+0100                          .ORG   0x100   
+0100   11 0C 01               LXI   D,SPLASH   
+0103   CD 1D 03               CALL   PUT_STRING   
+0106   CD E6 02               CALL   PRINT_MAP   
+0109   C3 4A 02               JMP   MAIN_LOOP   
+010C                SPLASH:   
+010C   20 5F 5F 5F 5F 5F 20 5F 20 20 20 20 20 5F 5F 5F 5F 5F 20 20 20 20 20 20 20 20 20 5F 5F 5F 5F 5F 20 20 20 20 20 20 20 20 20 0A 0D DB   " _____ _     _____         _____         ",0x0A,0x0D   
+0137   7C 5F 20 20 20 5F 7C 5F 7C 5F 5F 5F 7C 5F 20 20 20 5F 7C 5F 5F 5F 20 5F 5F 5F 7C 5F 20 20 20 5F 7C 5F 5F 5F 20 5F 5F 5F 20 0A 0D DB   "|_   _|_|___|_   _|___ ___|_   _|___ ___ ",0x0A,0x0D   
+0162   20 20 7C 20 7C 20 7C 20 7C 20 20 5F 7C 20 7C 20 7C 20 7C 20 2E 27 7C 20 20 5F 7C 20 7C 20 7C 20 7C 20 2E 20 7C 20 2D 5F 7C 0A 0D DB   "  | | | |  _| | | | .'|  _| | | | . | -_|",0x0A,0x0D   
+018D   20 20 7C 5F 7C 20 7C 5F 7C 5F 5F 5F 7C 20 7C 5F 7C 20 7C 5F 5F 2C 7C 5F 5F 5F 7C 20 7C 5F 7C 20 7C 5F 5F 5F 7C 5F 5F 5F 7C 0A 0D DB   "  |_| |_|___| |_| |__,|___| |_| |___|___|",0x0A,0x0D   
+01B8   20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 0A 0D DB   "                                         ",0x0A,0x0D   
+01E3   20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 0A 0D 24 DB   "                                         ",0x0A,0x0D,'$'   
+020F   50 6C 61 79 65 72 20 74 75 72 6E 3A 20 24 NEXT_PLAYER_STRING:   DB   "Player turn: $"   
+021D   50 6C 61 79 65 72 20 4F 0A 0D 24 PLAYERO:   DB   "Player O",0x0A,0x0D,'$'   
+0228   50 6C 61 79 65 72 20 58 0A 0D 24 PLAYERX:   DB   "Player X",0x0A,0x0D,'$'   
+0233   0A 0D 24     END_LINE:   DB   0x0A,0x0D,'$'   
+0236   4F           CURRENT:   DB   'O'   
+0237   31 32 33 34 35 36 37 38 39 MAP_DATA:   DB   "123456789"   
+0240   2D 2D 2D 2D 2D 2D 2D 0A 0D 24 MAP_HORIZONTAL:   DB   "-------",0x0A,0x0D,'$'   
+024A                MAIN_LOOP:   
+024A   11 0F 02               LXI   D,NEXT_PLAYER_STRING   
+024D   CD 1D 03               CALL   PUT_STRING   
+0250   3A 36 02               LDA   CURRENT   
+0253   11 1D 02               LXI   D,PLAYERO   
+0256   FE 4F                  CPI   'O'   
+0258   CA 5E 02               JZ   IS_O   
+025B   11 28 02               LXI   D,PLAYERX   
+025E                IS_O:     
+025E   CD 1D 03               CALL   PUT_STRING   
+0261   CD 70 02               CALL   GET_MOVE   
+0264   11 33 02               LXI   D,END_LINE   
+0267   CD 1D 03               CALL   PUT_STRING   
+026A   CD E6 02               CALL   PRINT_MAP   
+026D   C3 4A 02               JMP   MAIN_LOOP   
+0270                GET_MOVE:   
+0270   CD 11 03               CALL   GET_CHAR   
+0273   FE 31                  CPI   '1'   
+0275   DA 70 02               JC   GET_MOVE   
+0278   FE 3A                  CPI   '9' + 1   
+027A   D2 70 02               JNC   GET_MOVE   
+027D   11 37 02               LXI   D,MAP_DATA   
+0280   EB                     XCHG   
+0281   DE 30                  SBI   '0'   
+0283   16 00                  MVI   D,0   
+0285   5F                     MOV   E,A   
+0286   19                     DAD   D   
+0287   EB                     XCHG   
+0288   1A                     LDAX   D   
+0289   FE 4F                  CPI   'O'   
+028B   CA 70 02               JZ   GET_MOVE   
+028E   FE 58                  CPI   'X'   
+0290   CA 70 02               JZ   GET_MOVE   
+0293   3A 36 02               LDA   CURRENT   
+0296   12                     STAX   D   
+0297   FE 58                  CPI   'X'   
+0299   CA A1 02               JZ   CHANGE_CURRENT   
+029C   3E 58                  MVI   A,'X'   
+029E   C3 A6 02               JMP   END_IF   
+02A1                CHANGE_CURRENT:   
+02A1   3E 4F                  MVI   A,'O'   
+02A3   C3 A6 02               JMP   END_IF   
+02A6                END_IF:   
+02A6   32 36 02               STA   CURRENT   
+02A9   C9                     RET   
+02AA                DRAW_LINE:   
+02AA   21 37 02               LXI   H,MAP_DATA   
+02AD   19                     DAD   D   ; offset
+02AE   1E 7C                  MVI   E,'|'   
+02B0   CD 17 03               CALL   PUT_CHAR   
+02B3   EB                     XCHG   
+02B4   1A                     LDAX   D   
+02B5   43                     MOV   B,E   
+02B6   5F                     MOV   E,A   
+02B7   CD 17 03               CALL   PUT_CHAR   
+02BA   58                     MOV   E,B   
+02BB   EB                     XCHG   
+02BC   1E 7C                  MVI   E,'|'   
+02BE   CD 17 03               CALL   PUT_CHAR   
+02C1   23                     INX   H   
+02C2   EB                     XCHG   
+02C3   1A                     LDAX   D   
+02C4   43                     MOV   B,E   
+02C5   5F                     MOV   E,A   
+02C6   CD 17 03               CALL   PUT_CHAR   
+02C9   58                     MOV   E,B   
+02CA   EB                     XCHG   
+02CB   1E 7C                  MVI   E,'|'   
+02CD   CD 17 03               CALL   PUT_CHAR   
+02D0   23                     INX   H   
+02D1   EB                     XCHG   
+02D2   1A                     LDAX   D   
+02D3   43                     MOV   B,E   
+02D4   5F                     MOV   E,A   
+02D5   CD 17 03               CALL   PUT_CHAR   
+02D8   58                     MOV   E,B   
+02D9   EB                     XCHG   
+02DA   1E 7C                  MVI   E,'|'   
+02DC   CD 17 03               CALL   PUT_CHAR   
+02DF   11 33 02               LXI   D,END_LINE   
+02E2   CD 1D 03               CALL   PUT_STRING   
+02E5   C9                     RET   
+02E6                PRINT_MAP:   
+02E6   11 40 02               LXI   D,MAP_HORIZONTAL   
+02E9   CD 1D 03               CALL   PUT_STRING   
+02EC   11 00 00               LXI   D,0   
+02EF   CD AA 02               CALL   DRAW_LINE   
+02F2   11 40 02               LXI   D,MAP_HORIZONTAL   
+02F5   CD 1D 03               CALL   PUT_STRING   
+02F8   11 03 00               LXI   D,3   
+02FB   CD AA 02               CALL   DRAW_LINE   
+02FE   11 40 02               LXI   D,MAP_HORIZONTAL   
+0301   CD 1D 03               CALL   PUT_STRING   
+0304   11 06 00               LXI   D,6   
+0307   CD AA 02               CALL   DRAW_LINE   
+030A   11 40 02               LXI   D,MAP_HORIZONTAL   
+030D   CD 1D 03               CALL   PUT_STRING   
+0310   C9                     RET   
+0311                GET_CHAR:   
+0311   0E 01                  MVI   C,1   ; C_READ
+0313   CD 05 00               CALL   0x0005   
+0316   C9                     RET   
+0317                PUT_CHAR:   
+0317   0E 02                  MVI   C,2   ; C_WRITE
+0319   CD 05 00               CALL   0x0005   
+031C   C9                     RET   
+031D                PUT_STRING:   
+031D   0E 09                  MVI   C,9   ; C_WRITESTR
+031F   CD 05 00               CALL   0x0005   
+0322   C9                     RET   
