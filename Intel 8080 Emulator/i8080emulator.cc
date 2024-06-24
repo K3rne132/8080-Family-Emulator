@@ -3,10 +3,17 @@
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
+#include <string.h>
 
 #include "i8080emulator.h"
 #include "bdos.h"
 #include "system.h"
+
+volatile int _RUNNING = SET;
+
+void int_handler(int sig) {
+	_RUNNING = RESET;
+}
 
 int i8080_initialize(
 	INTEL_8080* i8080,

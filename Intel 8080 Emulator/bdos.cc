@@ -20,8 +20,5 @@ void bdos_syscall(INTEL_8080* i8080, DBG_CONSOLE* screen) {
 			index++;
 		}
 		break;
-	case 10:  // C_READSTR
-		gets_s((char*)&i8080->MEM[i8080->DE], (rsize_t)0x10000 - i8080->DE);
-		break;
 	}
 }

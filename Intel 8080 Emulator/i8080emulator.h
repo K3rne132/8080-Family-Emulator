@@ -12,11 +12,7 @@ typedef enum _CLK {
 	CLK_1KHZ = 1,
 } CLK;
 
-static volatile int _RUNNING = 1;
-
-static void int_handler(int sig) {
-	_RUNNING = 0;
-}
+void int_handler(int sig);
 
 int i8080_initialize(
 	INTEL_8080* i8080,

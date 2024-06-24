@@ -9,7 +9,6 @@ typedef HANDLE THREAD;
 #include <unistd.h>
 #include <pthread.h>
 #include <ncurses.h>
-#include <linux/delay.h>
 typedef pthread_t THREAD;
 #endif
 

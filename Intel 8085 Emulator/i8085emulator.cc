@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
+#include <string.h>
 
 #include "i8085emulator.h"
 #include "i8080emulator.h"

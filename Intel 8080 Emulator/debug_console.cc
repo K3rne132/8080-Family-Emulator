@@ -85,7 +85,7 @@ int replace_memory(
 	if (text == NULL)
 		return -1;
 	const uint16_t offset = memory_offset + num * 8;
-	snprintf(text, strlen(text), "%02X %02X %02X %02X %02X %02X %02X %02X ",
+	snprintf(text, MAX_MEMORY_WIDTH, "%02X %02X %02X %02X %02X %02X %02X %02X ",
 		i8080->MEM[offset + 0], i8080->MEM[offset + 1], i8080->MEM[offset + 2],
 		i8080->MEM[offset + 3], i8080->MEM[offset + 4], i8080->MEM[offset + 5],
 		i8080->MEM[offset + 6], i8080->MEM[offset + 7]);

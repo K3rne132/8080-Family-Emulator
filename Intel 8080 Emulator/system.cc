@@ -78,10 +78,12 @@ void cleanup_keys() {
 }
 
 void thread_sleep(uint32_t milliseconds) {
-	msleep(milliseconds);
+	usleep(milliseconds * 1000);
 }
 
 void initialize_screen() {}
+
+void cleanup_screen() {}
 
 void screen_go_home() {
 	printf("\033[H");
